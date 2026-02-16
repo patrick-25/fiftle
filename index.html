@@ -110,7 +110,12 @@
       border-radius: 20px; font-size: 13px; font-weight: 600;
     }
     .badge.exact { background: #dcfce7; color: #166534; }
-    .badge.misplaced { background: #fff7ed; color: #9a3412; }
+    .badge.misplaced { background: #fff7ed; color: #ea580c; }
+
+    .squiggle-icon {
+      display: inline-block; font-weight: 800; font-size: 16px; color: #ea580c;
+      font-family: 'JetBrains Mono', monospace; line-height: 1;
+    }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -130,10 +135,10 @@
     <div class="header">
       <div class="emoji">🔢</div>
       <h1>Fiftle</h1>
-      <div class="sub">5-digit code — all unique digits — unlimited guesses</div>
+      <div class="sub">Crack the five digit code, all digits are unique</div>
       <div class="legend">
         <span>✅ Right number, right place</span>
-        <span>〰️ Right number, wrong place</span>
+        <span><svg class="squiggle-legend" width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg> Right number, wrong place</span>
       </div>
     </div>
 
@@ -156,32 +161,62 @@
     let won = false;
     let completedGames = [];
     let freeGuess = null;
+    let usedFreeGuessToday = false;
+
+    var SQUIGGLE_SVG = '<svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle; margin-right: 2px;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
+
+    function getTodayKey() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function loadDailyFreeGuess() {
+      try {
+        var stored = localStorage.getItem('fiftle_free_guess');
+        if (stored) {
+          var data = JSON.parse(stored);
+          if (data.date === getTodayKey()) {
+            return { guess: data.guess, used: true };
+          }
+        }
+      } catch(e) {}
+      return { guess: null, used: false };
+    }
+
+    function saveDailyFreeGuess(guessDigits) {
+      try {
+        localStorage.setItem('fiftle_free_guess', JSON.stringify({
+          date: getTodayKey(),
+          guess: guessDigits
+        }));
+      } catch(e) {}
+    }
 
     function generateNumber() {
-      const digits = [0,1,2,3,4,5,6,7,8,9];
-      const first = digits.splice(Math.floor(Math.random() * 9) + 1, 1)[0];
-      const rest = [];
-      for (let i = 0; i < 4; i++) {
-        const idx = Math.floor(Math.random() * digits.length);
+      var digits = [0,1,2,3,4,5,6,7,8,9];
+      var first = digits.splice(Math.floor(Math.random() * 9) + 1, 1)[0];
+      var rest = [];
+      for (var i = 0; i < 4; i++) {
+        var idx = Math.floor(Math.random() * digits.length);
         rest.push(digits.splice(idx, 1)[0]);
       }
-      return [first, ...rest];
+      return [first].concat(rest);
     }
 
     function evaluate(sec, guess) {
-      let bulls = 0, cows = 0;
+      var exact = 0, misplaced = 0;
       guess.forEach(function(d, i) {
-        if (d === sec[i]) bulls++;
-        else if (sec.includes(d)) cows++;
+        if (d === sec[i]) exact++;
+        else if (sec.includes(d)) misplaced++;
       });
-      return { exact: bulls, misplaced: cows };
+      return { exact: exact, misplaced: misplaced };
     }
 
     function renderStats() {
-      const total = completedGames.length;
-      const avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : "\u2014";
-      const best = total > 0 ? Math.min.apply(null, completedGames) : "\u2014";
-      let html =
+      var total = completedGames.length;
+      var avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : "\u2014";
+      var best = total > 0 ? Math.min.apply(null, completedGames) : "\u2014";
+      var html =
         '<div class="stat-card"><div class="val">' + total + '</div><div class="lbl">Games Won</div></div>' +
         '<div class="stat-card"><div class="val">' + avg + '</div><div class="lbl">Avg Guesses</div></div>' +
         '<div class="stat-card"><div class="val">' + best + '</div><div class="lbl">Best</div></div>';
@@ -192,10 +227,10 @@
     }
 
     function renderInputs() {
-      const row = document.getElementById("digit-row");
+      var row = document.getElementById("digit-row");
       row.innerHTML = "";
-      for (let i = 0; i < 5; i++) {
-        const inp = document.createElement("input");
+      for (var i = 0; i < 5; i++) {
+        var inp = document.createElement("input");
         inp.type = "text";
         inp.inputMode = "numeric";
         inp.maxLength = 1;
@@ -209,8 +244,8 @@
     }
 
     function renderButtons() {
-      const row = document.getElementById("btn-row");
-      let html = "";
+      var row = document.getElementById("btn-row");
+      var html = "";
       if (!gameOver) {
         html += '<button class="btn-guess" onclick="submitGuess()">Guess</button>';
         if (guesses.length > 0) {
@@ -224,12 +259,12 @@
     }
 
     function renderBanner() {
-      const container = document.getElementById("banner-container");
+      var container = document.getElementById("banner-container");
       if (!gameOver) { container.innerHTML = ""; return; }
-      const total = completedGames.length;
-      const avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : null;
+      var total = completedGames.length;
+      var avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : null;
       if (won) {
-        let sub = "";
+        var sub = "";
         if (total > 1) sub = '<div class="banner-sub">Session average: ' + avg + ' guesses over ' + total + ' game' + (total > 1 ? 's' : '') + '</div>';
         container.innerHTML = '<div class="banner win"><div class="banner-emoji">🎉</div><div class="banner-text">Cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!</div>' + sub + '</div>';
       } else {
@@ -238,11 +273,11 @@
     }
 
     function makeGuessRowHTML(guess, result, index, isFreebie) {
-      let cls = "guess-row";
+      var cls = "guess-row";
       if (isFreebie) cls += " freebie";
       if (result.exact === 5) cls += " winner";
-      const label = isFreebie ? "free" : "#" + index;
-      const digitsHTML = guess.map(function(d) { return '<span class="guess-digit">' + d + '</span>'; }).join("");
+      var label = isFreebie ? "free" : "#" + index;
+      var digitsHTML = guess.map(function(d) { return '<span class="guess-digit">' + d + '</span>'; }).join("");
       return '<div class="' + cls + '">' +
         '<div class="guess-left">' +
           '<span class="guess-idx">' + label + '</span>' +
@@ -250,14 +285,14 @@
         '</div>' +
         '<div class="guess-right">' +
           '<span class="badge exact">✅ ' + result.exact + '</span>' +
-          '<span class="badge misplaced">〰️ ' + result.misplaced + '</span>' +
+          '<span class="badge misplaced">' + SQUIGGLE_SVG + ' ' + result.misplaced + '</span>' +
         '</div>' +
       '</div>';
     }
 
     function renderGuessList() {
-      const list = document.getElementById("guess-list");
-      let html = "";
+      var list = document.getElementById("guess-list");
+      var html = "";
       if (freeGuess) html += makeGuessRowHTML(freeGuess.guess, freeGuess.result, 0, true);
       guesses.forEach(function(g, i) {
         html += makeGuessRowHTML(g.guess, g.result, i + 1, false);
@@ -276,15 +311,15 @@
     function getDigitInputs() { return document.querySelectorAll(".digit-input"); }
 
     function onDigitInput(e) {
-      const inp = e.target;
-      const idx = parseInt(inp.dataset.idx);
+      var inp = e.target;
+      var idx = parseInt(inp.dataset.idx);
       inp.value = inp.value.replace(/\D/g, "").slice(-1);
       if (inp.value && idx < 4) getDigitInputs()[idx + 1].focus();
     }
 
     function onDigitKeyDown(e) {
-      const idx = parseInt(e.target.dataset.idx);
-      const inputs = getDigitInputs();
+      var idx = parseInt(e.target.dataset.idx);
+      var inputs = getDigitInputs();
       if (e.key === "Backspace" && !e.target.value && idx > 0) inputs[idx - 1].focus();
       if (e.key === "Enter") submitGuess();
       if (e.key === "ArrowLeft" && idx > 0) inputs[idx - 1].focus();
@@ -297,19 +332,19 @@
     }
 
     function shakeInput() {
-      const area = document.getElementById("input-area");
+      var area = document.getElementById("input-area");
       area.classList.add("shake");
       setTimeout(function() { area.classList.remove("shake"); }, 500);
     }
 
     function submitGuess() {
       if (gameOver) return;
-      const vals = Array.from(getDigitInputs()).map(function(inp) { return inp.value; });
+      var vals = Array.from(getDigitInputs()).map(function(inp) { return inp.value; });
       if (vals.some(function(v) { return v === ""; })) { shakeInput(); return; }
-      const guess = vals.map(Number);
+      var guess = vals.map(Number);
       if (new Set(guess).size !== 5) { shakeInput(); return; }
 
-      const result = evaluate(secret, guess);
+      var result = evaluate(secret, guess);
       guesses.push({ guess: guess, result: result });
 
       if (result.exact === 5) {
@@ -333,8 +368,18 @@
       guesses = [];
       gameOver = false;
       won = false;
-      var fg = generateNumber();
-      freeGuess = { guess: fg, result: evaluate(secret, fg) };
+
+      var daily = loadDailyFreeGuess();
+      if (daily.used) {
+        // Already had a free guess today — re-evaluate against new secret
+        freeGuess = { guess: daily.guess, result: evaluate(secret, daily.guess) };
+      } else {
+        // First game of the day — generate and save
+        var fg = generateNumber();
+        saveDailyFreeGuess(fg);
+        freeGuess = { guess: fg, result: evaluate(secret, fg) };
+      }
+
       renderInputs();
       render();
       setTimeout(function() { getDigitInputs()[0].focus(); }, 50);
