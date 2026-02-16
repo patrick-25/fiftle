@@ -1,0 +1,275 @@
+import { useState, useCallback, useEffect, useRef } from "react";
+
+const generateNumber = () => {
+  const digits = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const first = digits.splice(Math.floor(Math.random() * 9) + 1, 1)[0];
+  const rest = [];
+  for (let i = 0; i < 4; i++) {
+    const idx = Math.floor(Math.random() * digits.length);
+    rest.push(digits.splice(idx, 1)[0]);
+  }
+  return [first, ...rest];
+};
+
+const evaluate = (secret, guess) => {
+  let bulls = 0, cows = 0;
+  guess.forEach((d, i) => {
+    if (d === secret[i]) bulls++;
+    else if (secret.includes(d)) cows++;
+  });
+  return { bulls, cows };
+};
+
+const DigitInput = ({ value, onChange, onKeyDown, inputRef, disabled }) => (
+  <input
+    ref={inputRef}
+    type="text"
+    inputMode="numeric"
+    maxLength={1}
+    value={value}
+    onChange={onChange}
+    onKeyDown={onKeyDown}
+    disabled={disabled}
+    style={{
+      width: 48, height: 60, fontSize: 26, fontWeight: 700, textAlign: "center",
+      border: "2px solid #d1d5db", borderRadius: 12, outline: "none",
+      background: disabled ? "#f3f4f6" : "#fff", color: "#1e293b",
+      transition: "all 0.15s ease", fontFamily: "'JetBrains Mono', 'Fira Code', monospace",
+    }}
+    onFocus={(e) => { e.target.style.borderColor = "#6366f1"; e.target.style.boxShadow = "0 0 0 3px rgba(99,102,241,0.15)"; e.target.select(); }}
+    onBlur={(e) => { e.target.style.borderColor = "#d1d5db"; e.target.style.boxShadow = "none"; }}
+  />
+);
+
+const ResultBadge = ({ type, count }) => {
+  const isBull = type === "bull";
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px",
+      borderRadius: 20, fontSize: 13, fontWeight: 600,
+      background: isBull ? "#dcfce7" : "#fef9c3", color: isBull ? "#166534" : "#854d0e",
+    }}>
+      {isBull ? "\uD83C\uDFAF" : "\uD83D\uDC04"} {count}
+    </span>
+  );
+};
+
+const GuessRow = ({ guess, result, index, isFreebie }) => (
+  <div style={{
+    display: "flex", alignItems: "center", justifyContent: "space-between",
+    padding: "8px 14px", borderRadius: 10,
+    background: result.bulls === 5
+      ? "linear-gradient(135deg, #dcfce7, #d1fae5)"
+      : isFreebie
+        ? "rgba(238,242,255,0.7)"
+        : "rgba(248,250,252,0.8)",
+    border: result.bulls === 5 ? "1px solid #86efac" : isFreebie ? "1px dashed #a5b4fc" : "1px solid #e2e8f0",
+  }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <span style={{ fontSize: 12, color: isFreebie ? "#818cf8" : "#94a3b8", fontWeight: 600, width: 28, fontFamily: "monospace" }}>
+        {isFreebie ? "free" : `#${index}`}
+      </span>
+      <div style={{ display: "flex", gap: 4 }}>
+        {guess.map((d, i) => (
+          <span key={i} style={{
+            width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: 7, fontWeight: 700, fontSize: 16, fontFamily: "'JetBrains Mono', monospace",
+            background: result.bulls === 5 ? "#bbf7d0" : isFreebie ? "#e0e7ff" : "#e2e8f0", color: "#1e293b",
+          }}>{d}</span>
+        ))}
+      </div>
+    </div>
+    <div style={{ display: "flex", gap: 6 }}>
+      <ResultBadge type="bull" count={result.bulls} />
+      <ResultBadge type="cow" count={result.cows} />
+    </div>
+  </div>
+);
+
+const StatCard = ({ label, value, sub }) => (
+  <div style={{
+    flex: 1, padding: "10px 12px", borderRadius: 10,
+    background: "rgba(248,250,252,0.8)", border: "1px solid #e2e8f0", textAlign: "center",
+  }}>
+    <div style={{ fontSize: 22, fontWeight: 800, color: "#1e293b", fontFamily: "'JetBrains Mono', monospace" }}>{value}</div>
+    <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" }}>{label}</div>
+    {sub && <div style={{ fontSize: 11, color: "#a5b4fc", marginTop: 2 }}>{sub}</div>}
+  </div>
+);
+
+export default function CowsAndBulls() {
+  const [secret, setSecret] = useState(() => generateNumber());
+  const [digits, setDigits] = useState(["", "", "", "", ""]);
+  const [guesses, setGuesses] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
+  const [won, setWon] = useState(false);
+  const [shake, setShake] = useState(false);
+  const [completedGames, setCompletedGames] = useState([]);
+  const [freeGuess, setFreeGuess] = useState(null);
+  const inputRefs = [useRef(), useRef(), useRef(), useRef(), useRef()];
+  const listRef = useRef();
+
+  // Generate the free first guess on new game
+  useEffect(() => {
+    const fg = generateNumber();
+    const result = evaluate(secret, fg);
+    setFreeGuess({ guess: fg, result });
+    setGuesses([]);
+    setGameOver(false);
+    setWon(false);
+    setDigits(["", "", "", "", ""]);
+    setTimeout(() => inputRefs[0].current?.focus(), 50);
+  }, [secret]);
+
+  useEffect(() => {
+    if (listRef.current) listRef.current.scrollTop = listRef.current.scrollHeight;
+  }, [guesses]);
+
+  const handleChange = (idx) => (e) => {
+    const val = e.target.value.replace(/\D/g, "");
+    if (!val) { const next = [...digits]; next[idx] = ""; setDigits(next); return; }
+    const next = [...digits]; next[idx] = val.slice(-1); setDigits(next);
+    if (idx < 4) inputRefs[idx + 1].current?.focus();
+  };
+
+  const handleKeyDown = (idx) => (e) => {
+    if (e.key === "Backspace" && !digits[idx] && idx > 0) inputRefs[idx - 1].current?.focus();
+    if (e.key === "Enter") submitGuess();
+    if (e.key === "ArrowLeft" && idx > 0) inputRefs[idx - 1].current?.focus();
+    if (e.key === "ArrowRight" && idx < 4) inputRefs[idx + 1].current?.focus();
+  };
+
+  const submitGuess = useCallback(() => {
+    if (gameOver) return;
+    const guess = digits.map(Number);
+    if (digits.some((d) => d === "") || new Set(guess).size !== 5) {
+      setShake(true); setTimeout(() => setShake(false), 500); return;
+    }
+    const result = evaluate(secret, guess);
+    const newGuesses = [...guesses, { guess, result }];
+    setGuesses(newGuesses);
+    setDigits(["", "", "", "", ""]);
+    inputRefs[0].current?.focus();
+    if (result.bulls === 5) {
+      setWon(true);
+      setGameOver(true);
+      setCompletedGames((prev) => [...prev, newGuesses.length]);
+    }
+  }, [digits, guesses, secret, gameOver]);
+
+  const newGame = () => {
+    setSecret(generateNumber());
+  };
+
+  const giveUp = () => {
+    setGameOver(true);
+    setWon(false);
+  };
+
+  const guessCount = guesses.length;
+  const totalGames = completedGames.length;
+  const average = totalGames > 0 ? (completedGames.reduce((a, b) => a + b, 0) / totalGames).toFixed(1) : "\u2014";
+  const best = totalGames > 0 ? Math.min(...completedGames) : "\u2014";
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: "linear-gradient(160deg, #f8fafc 0%, #eef2ff 50%, #faf5ff 100%)",
+      display: "flex", justifyContent: "center", padding: "24px 16px",
+      fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    }}>
+      <div style={{ width: "100%", maxWidth: 500 }}>
+        {/* Header */}
+        <div style={{ textAlign: "center", marginBottom: 20 }}>
+          <div style={{ fontSize: 36, marginBottom: 2 }}>{"\uD83D\uDC04\uD83C\uDFAF"}</div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: "#1e293b", margin: 0 }}>Cows & Bulls</h1>
+          <p style={{ color: "#64748b", fontSize: 13, margin: "4px 0 0" }}>
+            5-digit code — all unique digits — unlimited guesses
+          </p>
+          <div style={{ display: "flex", justifyContent: "center", gap: 14, marginTop: 6, fontSize: 12, color: "#94a3b8" }}>
+            <span>{"\uD83C\uDFAF"} Bull = right place</span>
+            <span>{"\uD83D\uDC04"} Cow = wrong place</span>
+          </div>
+        </div>
+
+        {/* Stats Bar */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
+          <StatCard label="Games Won" value={totalGames} />
+          <StatCard label="Avg Guesses" value={average} />
+          <StatCard label="Best" value={best} />
+          {!gameOver && <StatCard label="Current" value={guessCount} sub="guesses" />}
+        </div>
+
+        {/* Input Area */}
+        <div style={{
+          background: "#fff", borderRadius: 16, padding: "20px 16px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04)",
+          marginBottom: 16, animation: shake ? "shake 0.4s ease" : "none",
+        }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 10, marginBottom: 14 }}>
+            {digits.map((d, i) => (
+              <DigitInput key={i} value={d} onChange={handleChange(i)} onKeyDown={handleKeyDown(i)} inputRef={inputRefs[i]} disabled={gameOver} />
+            ))}
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={submitGuess} disabled={gameOver} style={{
+              flex: 1, padding: "11px 0", borderRadius: 10, border: "none",
+              background: gameOver ? "#e2e8f0" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              color: gameOver ? "#94a3b8" : "#fff", fontSize: 15, fontWeight: 700,
+              cursor: gameOver ? "default" : "pointer",
+            }}>Guess</button>
+            {!gameOver && guesses.length > 0 && (
+              <button onClick={giveUp} style={{
+                padding: "11px 16px", borderRadius: 10, border: "1px solid #fca5a5",
+                background: "#fff", color: "#dc2626", fontSize: 14, fontWeight: 600, cursor: "pointer",
+              }}>Give Up</button>
+            )}
+            {gameOver && (
+              <button onClick={newGame} style={{
+                padding: "11px 20px", borderRadius: 10, border: "1px solid #e2e8f0",
+                background: "#fff", color: "#64748b", fontSize: 15, fontWeight: 600, cursor: "pointer",
+              }}>New Game</button>
+            )}
+          </div>
+        </div>
+
+        {/* Game Over Banner */}
+        {gameOver && (
+          <div style={{
+            padding: "14px 18px", borderRadius: 12, marginBottom: 14, textAlign: "center",
+            background: won ? "linear-gradient(135deg, #dcfce7, #d1fae5)" : "linear-gradient(135deg, #fee2e2, #fef2f2)",
+            border: won ? "1px solid #86efac" : "1px solid #fca5a5",
+          }}>
+            <div style={{ fontSize: 26, marginBottom: 2 }}>{won ? "\uD83C\uDF89" : "\uD83D\uDE14"}</div>
+            <div style={{ fontWeight: 700, fontSize: 16, color: won ? "#166534" : "#991b1b" }}>
+              {won
+                ? `Cracked it in ${guessCount} guess${guessCount > 1 ? "es" : ""}!`
+                : `The number was ${secret.join("")}`}
+            </div>
+            {won && totalGames > 1 && (
+              <div style={{ fontSize: 13, color: "#166534", marginTop: 4 }}>
+                Session average: {average} guesses over {totalGames} game{totalGames > 1 ? "s" : ""}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Guess History */}
+        <div ref={listRef} style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 400, overflowY: "auto", paddingRight: 4 }}>
+          {freeGuess && (
+            <GuessRow guess={freeGuess.guess} result={freeGuess.result} index={0} isFreebie={true} />
+          )}
+          {guesses.map((g, i) => (
+            <GuessRow key={i} guess={g.guess} result={g.result} index={i + 1} isFreebie={false} />
+          ))}
+        </div>
+
+        <style>{`
+          @keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(4px); } }
+          ::-webkit-scrollbar { width: 6px; }
+          ::-webkit-scrollbar-track { background: transparent; }
+          ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        `}</style>
+      </div>
+    </div>
+  );
+}
