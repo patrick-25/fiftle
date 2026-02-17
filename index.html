@@ -72,6 +72,13 @@
       background: #fff; color: #64748b; font-size: 15px; font-weight: 600; cursor: pointer;
     }
 
+    .btn-share {
+      padding: 11px 20px; border-radius: 10px; border: none;
+      background: #25D366; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-share:hover { background: #1fb855; }
+
     .banner {
       padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; text-align: center;
     }
@@ -81,6 +88,7 @@
     .banner.win .banner-text { font-weight: 700; font-size: 16px; color: #166534; }
     .banner.lose .banner-text { font-weight: 700; font-size: 16px; color: #991b1b; }
     .banner .banner-sub { font-size: 13px; color: #166534; margin-top: 4px; }
+    .banner .banner-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
 
     .guess-row {
       display: flex; align-items: center; justify-content: space-between;
@@ -112,11 +120,6 @@
     .badge.exact { background: #dcfce7; color: #166534; }
     .badge.misplaced { background: #fff7ed; color: #ea580c; }
 
-    .squiggle-icon {
-      display: inline-block; font-weight: 800; font-size: 16px; color: #ea580c;
-      font-family: 'JetBrains Mono', monospace; line-height: 1;
-    }
-
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       20% { transform: translateX(-8px); }
@@ -135,10 +138,10 @@
     <div class="header">
       <div class="emoji">🔢</div>
       <h1>Fiftle</h1>
-      <div class="sub">Crack the five digit code, digits 0-9, all digits are unique</div>
+      <div class="sub">Crack the five digit code, digits 0-9, each digit is unique</div>
       <div class="legend">
         <span>✅ Right number, right place</span>
-        <span><svg class="squiggle-legend" width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg> Right number, wrong place</span>
+        <span><svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg> Right number, wrong place</span>
       </div>
     </div>
 
@@ -155,13 +158,12 @@
   </div>
 
   <script>
-    let secret = [];
-    let guesses = [];
-    let gameOver = false;
-    let won = false;
-    let completedGames = [];
-    let freeGuess = null;
-    let usedFreeGuessToday = false;
+    var secret = [];
+    var guesses = [];
+    var gameOver = false;
+    var won = false;
+    var completedGames = [];
+    var freeGuess = null;
 
     var SQUIGGLE_SVG = '<svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle; margin-right: 2px;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
 
@@ -210,6 +212,55 @@
         else if (sec.includes(d)) misplaced++;
       });
       return { exact: exact, misplaced: misplaced };
+    }
+
+    // Build per-digit colour map: green if exact, orange if misplaced, grey if wrong
+    function evaluatePerDigit(sec, guess) {
+      return guess.map(function(d, i) {
+        if (d === sec[i]) return 'exact';
+        if (sec.includes(d)) return 'misplaced';
+        return 'wrong';
+      });
+    }
+
+    function buildShareText() {
+      var allGuesses = [];
+      if (freeGuess) allGuesses.push(freeGuess);
+      guesses.forEach(function(g) { allGuesses.push(g); });
+
+      var lines = allGuesses.map(function(g) {
+        var colours = evaluatePerDigit(secret, g.guess);
+        return colours.map(function(c) {
+          if (c === 'exact') return '🟩';
+          if (c === 'misplaced') return '🟧';
+          return '⬜';
+        }).join('');
+      });
+
+      var header = '🔢 Fiftle';
+      if (won) {
+        header += ' — cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!';
+      } else {
+        header += ' — gave up 😔';
+      }
+
+      return header + '\n\n' + lines.join('\n') + '\n\nPlay at fiftle.xyz';
+    }
+
+    function shareWhatsApp() {
+      var text = buildShareText();
+      var url = 'https://wa.me/?text=' + encodeURIComponent(text);
+      window.open(url, '_blank');
+    }
+
+    function copyResult() {
+      var text = buildShareText();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          var btn = document.getElementById('btn-copy');
+          if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 1500); }
+        });
+      }
     }
 
     function renderStats() {
@@ -263,12 +314,18 @@
       if (!gameOver) { container.innerHTML = ""; return; }
       var total = completedGames.length;
       var avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : null;
+
+      var shareButtons = '<div class="banner-actions">' +
+        '<button class="btn-share" onclick="shareWhatsApp()"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>' +
+        '<button class="btn-new" id="btn-copy" onclick="copyResult()" style="font-size:14px;">📋 Copy</button>' +
+        '</div>';
+
       if (won) {
         var sub = "";
         if (total > 1) sub = '<div class="banner-sub">Session average: ' + avg + ' guesses over ' + total + ' game' + (total > 1 ? 's' : '') + '</div>';
-        container.innerHTML = '<div class="banner win"><div class="banner-emoji">🎉</div><div class="banner-text">Cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!</div>' + sub + '</div>';
+        container.innerHTML = '<div class="banner win"><div class="banner-emoji">🎉</div><div class="banner-text">Cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!</div>' + sub + shareButtons + '</div>';
       } else {
-        container.innerHTML = '<div class="banner lose"><div class="banner-emoji">😔</div><div class="banner-text">The number was ' + secret.join("") + '</div></div>';
+        container.innerHTML = '<div class="banner lose"><div class="banner-emoji">😔</div><div class="banner-text">The number was ' + secret.join("") + '</div>' + shareButtons + '</div>';
       }
     }
 
@@ -371,10 +428,8 @@
 
       var daily = loadDailyFreeGuess();
       if (daily.used) {
-        // Already had a free guess today — re-evaluate against new secret
         freeGuess = { guess: daily.guess, result: evaluate(secret, daily.guess) };
       } else {
-        // First game of the day — generate and save
         var fg = generateNumber();
         saveDailyFreeGuess(fg);
         freeGuess = { guess: fg, result: evaluate(secret, fg) };
@@ -389,3 +444,4 @@
   </script>
 </body>
 </html>
+```
