@@ -408,6 +408,16 @@
     }
 
     // =====================================================
+    // HELPER: parse guess from Firestore (string or array)
+    // =====================================================
+    function parseGuess(raw) {
+      if (typeof raw === 'string') {
+        return raw.split(',').map(Number);
+      }
+      return raw;
+    }
+
+    // =====================================================
     // SAVE / LOAD GAME STATE
     // =====================================================
     function getDocId() {
@@ -420,16 +430,18 @@
         return;
       }
       try {
-        var allGuessArrays = [];
-        if (freeGuess) allGuessArrays.push(freeGuess.guess);
-        guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
+        // Convert each guess array to a comma-separated string
+        // because Firestore does not support nested arrays
+        var allGuessStrings = [];
+        if (freeGuess) allGuessStrings.push(freeGuess.guess.join(','));
+        guesses.forEach(function(g) { allGuessStrings.push(g.guess.join(',')); });
 
         var data = {
           date: todayKey,
           playerId: currentUid,
           playerName: playerName,
           guessCount: guesses.length,
-          guesses: allGuessArrays,
+          guesses: allGuessStrings,
           won: won,
           gameOver: gameOver,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -474,7 +486,7 @@
       guesses = [];
       var savedGuesses = data.guesses || [];
       for (var i = 1; i < savedGuesses.length; i++) {
-        var g = savedGuesses[i];
+        var g = parseGuess(savedGuesses[i]);
         var result = evaluate(secret, g);
         guesses.push({ guess: g, result: result });
       }
@@ -509,6 +521,8 @@
     // =====================================================
     function loadLeaderboard() {
       document.getElementById('lb-date').textContent = 'Daily challenge: ' + todayKey;
+
+      // Try query with gameOver filter first, fall back to simpler query
       db.collection('fiftle_scores')
         .where('date', '==', todayKey)
         .where('gameOver', '==', true)
@@ -516,59 +530,50 @@
         .orderBy('guessCount', 'asc')
         .get()
         .then(function(snapshot) {
-          var list = document.getElementById('lb-list');
-          if (snapshot.empty) {
-            list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
-            return;
-          }
-          var html = '';
-          var rank = 0;
-          snapshot.forEach(function(doc) {
-            rank++;
-            var d = doc.data();
-            var isYou = d.playerId === currentUid;
-            var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
-            html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
-              '<span class="lb-rank">' + rank + '</span>' +
-              '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
-              '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
-              '<span class="lb-detail">' + status + '</span>' +
-              '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
-            '</div>';
-          });
-          list.innerHTML = html;
+          renderLeaderboardResults(snapshot);
         }).catch(function(err) {
-          debugLog('Leaderboard error: ' + err.message);
-          // Fallback query without gameOver filter (for older data)
+          debugLog('Leaderboard query 1 error: ' + err.message);
+          // Fallback without gameOver filter
           db.collection('fiftle_scores')
             .where('date', '==', todayKey)
             .orderBy('won', 'desc')
             .orderBy('guessCount', 'asc')
             .get()
             .then(function(snapshot) {
-              var list = document.getElementById('lb-list');
-              if (snapshot.empty) {
-                list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
-                return;
-              }
-              var html = '';
-              var rank = 0;
-              snapshot.forEach(function(doc) {
-                rank++;
-                var d = doc.data();
-                var isYou = d.playerId === currentUid;
-                var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
-                html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
-                  '<span class="lb-rank">' + rank + '</span>' +
-                  '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
-                  '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
-                  '<span class="lb-detail">' + status + '</span>' +
-                  '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
-                '</div>';
-              });
-              list.innerHTML = html;
+              renderLeaderboardResults(snapshot);
+            }).catch(function(err2) {
+              debugLog('Leaderboard query 2 error: ' + err2.message);
             });
         });
+    }
+
+    function renderLeaderboardResults(snapshot) {
+      var list = document.getElementById('lb-list');
+      if (snapshot.empty) {
+        list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
+        return;
+      }
+      var html = '';
+      var rank = 0;
+      snapshot.forEach(function(doc) {
+        var d = doc.data();
+        // Skip in-progress games in fallback query
+        if (d.gameOver === false) return;
+        rank++;
+        var isYou = d.playerId === currentUid;
+        var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
+        html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
+          '<span class="lb-rank">' + rank + '</span>' +
+          '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
+          '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
+          '<span class="lb-detail">' + status + '</span>' +
+          '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
+        '</div>';
+      });
+      if (!html) {
+        html = '<div class="lb-empty">No scores yet today — be the first!</div>';
+      }
+      list.innerHTML = html;
     }
 
     function escHtml(str) {
@@ -617,7 +622,7 @@
       var html = '';
       var dailySecret = generateDailySecret(replayData.date);
       for (var i = 0; i < replayStep; i++) {
-        var g = replayData.guesses[i];
+        var g = parseGuess(replayData.guesses[i]);
         var result = evaluate(dailySecret, g);
         var isFree = (i === 0);
         html += makeGuessRowHTML(g, result, isFree ? 0 : i, isFree);
@@ -857,7 +862,6 @@
           completedGames.push(guesses.length);
         }
 
-        // Save to Firebase after every guess (persists progress)
         saveGameState();
 
         fullRender();
