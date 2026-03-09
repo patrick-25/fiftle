@@ -172,6 +172,12 @@
     }
     .btn-replay-ctrl.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; }
 
+    #debug-log {
+      position: fixed; bottom: 0; left: 0; right: 0; max-height: 150px; overflow-y: auto;
+      background: rgba(0,0,0,0.85); color: #0f0; font-family: monospace; font-size: 11px;
+      padding: 8px; z-index: 9999; display: none;
+    }
+
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
       20% { transform: translateX(-8px); }
@@ -240,11 +246,39 @@
     </div>
   </div>
 
+  <div id="debug-log"></div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <script>
+    // =====================================================
+    // DEBUG — triple-tap the title to show/hide debug log
+    // =====================================================
+    var debugEl = document.getElementById('debug-log');
+    var tapCount = 0;
+    var tapTimer = null;
+    document.querySelector('.header h1').addEventListener('click', function() {
+      tapCount++;
+      clearTimeout(tapTimer);
+      tapTimer = setTimeout(function() { tapCount = 0; }, 500);
+      if (tapCount >= 3) {
+        tapCount = 0;
+        debugEl.style.display = debugEl.style.display === 'none' ? 'block' : 'none';
+      }
+    });
+    function debugLog(msg) {
+      console.log('[Fiftle]', msg);
+      var line = document.createElement('div');
+      line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
+      debugEl.appendChild(line);
+      debugEl.scrollTop = debugEl.scrollHeight;
+    }
+
+    // =====================================================
+    // FIREBASE
+    // =====================================================
     firebase.initializeApp({
       apiKey: "AIzaSyBYI2j_SWzdNUllOJphwbbA9sm9rpZe2wA",
       authDomain: "fiftle.firebaseapp.com",
@@ -262,10 +296,13 @@
     function initAuth() {
       return auth.signInAnonymously().then(function(result) {
         currentUid = result.user.uid;
+        debugLog('Auth OK: ' + currentUid);
         playerName = localStorage.getItem('fiftle_player_name');
         if (!playerName) {
           document.getElementById('name-modal').style.display = 'flex';
         }
+      }).catch(function(err) {
+        debugLog('Auth FAILED: ' + err.message);
       });
     }
 
@@ -346,22 +383,26 @@
     var completedGames = [];
     var freeGuess = null;
     var todayKey = getTodayKey();
+    var submitting = false;
 
     var SQUIGGLE_SVG = '<svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle; margin-right: 2px;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
 
     function evaluate(sec, guess) {
       var exact = 0, misplaced = 0;
-      guess.forEach(function(d, i) {
-        if (d === sec[i]) exact++;
-        else if (sec.includes(d)) misplaced++;
-      });
+      for (var i = 0; i < guess.length; i++) {
+        if (guess[i] === sec[i]) {
+          exact++;
+        } else if (sec.indexOf(guess[i]) !== -1) {
+          misplaced++;
+        }
+      }
       return { exact: exact, misplaced: misplaced };
     }
 
     function evaluatePerDigit(sec, guess) {
       return guess.map(function(d, i) {
         if (d === sec[i]) return 'exact';
-        if (sec.includes(d)) return 'misplaced';
+        if (sec.indexOf(d) !== -1) return 'misplaced';
         return 'wrong';
       });
     }
@@ -383,21 +424,32 @@
     // FIREBASE: SAVE + LEADERBOARD
     // =====================================================
     function saveScore() {
-      if (!currentUid || !playerName) return;
-      var docId = todayKey + '_' + currentUid;
-      var allGuessArrays = [];
-      if (freeGuess) allGuessArrays.push(freeGuess.guess);
-      guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
+      if (!currentUid || !playerName) {
+        debugLog('saveScore skipped: no uid or name');
+        return;
+      }
+      try {
+        var docId = todayKey + '_' + currentUid;
+        var allGuessArrays = [];
+        if (freeGuess) allGuessArrays.push(freeGuess.guess);
+        guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
 
-      db.collection('fiftle_scores').doc(docId).set({
-        date: todayKey,
-        playerId: currentUid,
-        playerName: playerName,
-        guessCount: guesses.length,
-        guesses: allGuessArrays,
-        won: won,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-      });
+        db.collection('fiftle_scores').doc(docId).set({
+          date: todayKey,
+          playerId: currentUid,
+          playerName: playerName,
+          guessCount: guesses.length,
+          guesses: allGuessArrays,
+          won: won,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function() {
+          debugLog('Score saved OK');
+        }).catch(function(err) {
+          debugLog('Score save error: ' + err.message);
+        });
+      } catch (err) {
+        debugLog('saveScore exception: ' + err.message);
+      }
     }
 
     function loadLeaderboard() {
@@ -429,6 +481,8 @@
             '</div>';
           });
           list.innerHTML = html;
+        }).catch(function(err) {
+          debugLog('Leaderboard error: ' + err.message);
         });
     }
 
@@ -518,7 +572,7 @@
         inp.maxLength = 1;
         inp.className = "digit-input";
         inp.disabled = gameOver;
-        inp.dataset.idx = i;
+        inp.dataset.idx = String(i);
         inp.addEventListener("input", onDigitInput);
         inp.addEventListener("keydown", onDigitKeyDown);
         row.appendChild(inp);
@@ -623,15 +677,16 @@
       list.scrollTop = list.scrollHeight;
     }
 
-    function render() {
+    function fullRender() {
       renderStats();
       renderButtons();
       renderBanner();
       renderGuessList();
+      renderInputs();
     }
 
     // =====================================================
-    // INPUT HANDLERS — scoped to #digit-row
+    // INPUT HANDLERS
     // =====================================================
     function getDigitInputs() {
       return document.getElementById("digit-row").querySelectorAll("input");
@@ -650,8 +705,13 @@
     function onDigitKeyDown(e) {
       var idx = parseInt(e.target.dataset.idx);
       var inputs = getDigitInputs();
-      if (e.key === "Backspace" && !e.target.value && idx > 0) inputs[idx - 1].focus();
-      if (e.key === "Enter") submitGuess();
+      if (e.key === "Backspace" && !e.target.value && idx > 0) {
+        inputs[idx - 1].focus();
+      }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        submitGuess();
+      }
       if (e.key === "ArrowLeft" && idx > 0) inputs[idx - 1].focus();
       if (e.key === "ArrowRight" && idx < 4) inputs[idx + 1].focus();
     }
@@ -672,41 +732,64 @@
     // GAME ACTIONS
     // =====================================================
     function submitGuess() {
-      if (gameOver) return;
+      debugLog('submitGuess called. gameOver=' + gameOver + ' submitting=' + submitting);
 
-      var inputs = getDigitInputs();
-      var vals = [];
-      for (var i = 0; i < inputs.length; i++) {
-        vals.push(inputs[i].value);
-      }
+      if (gameOver || submitting) return;
+      submitting = true;
 
-      if (vals.length !== 5 || vals.some(function(v) { return v === ""; })) {
-        shakeInput();
-        return;
-      }
+      try {
+        var inputs = getDigitInputs();
+        debugLog('Found ' + inputs.length + ' inputs');
 
-      var guess = vals.map(Number);
-      if (new Set(guess).size !== 5) {
-        shakeInput();
-        return;
-      }
+        var vals = [];
+        for (var i = 0; i < inputs.length; i++) {
+          vals.push(inputs[i].value);
+        }
+        debugLog('Input values: ' + JSON.stringify(vals));
 
-      var result = evaluate(secret, guess);
-      guesses.push({ guess: guess, result: result });
+        if (vals.length !== 5 || vals.some(function(v) { return v === ""; })) {
+          debugLog('Validation fail: empty inputs');
+          shakeInput();
+          submitting = false;
+          return;
+        }
 
-      if (result.exact === 5) {
-        won = true;
-        gameOver = true;
-        completedGames.push(guesses.length);
-        saveScore();
-      }
+        var guess = vals.map(Number);
+        debugLog('Guess: ' + JSON.stringify(guess) + ' Secret: ' + JSON.stringify(secret));
 
-      render();
-      if (!gameOver) {
-        renderInputs();
-        setTimeout(function() { clearInputs(); }, 10);
-      } else {
-        renderInputs();
+        if (new Set(guess).size !== 5) {
+          debugLog('Validation fail: duplicate digits');
+          shakeInput();
+          submitting = false;
+          return;
+        }
+
+        var result = evaluate(secret, guess);
+        debugLog('Result: exact=' + result.exact + ' misplaced=' + result.misplaced);
+
+        guesses.push({ guess: guess, result: result });
+
+        if (result.exact === 5) {
+          debugLog('WIN!');
+          won = true;
+          gameOver = true;
+          completedGames.push(guesses.length);
+          saveScore();
+        }
+
+        fullRender();
+
+        if (!gameOver) {
+          setTimeout(function() {
+            clearInputs();
+            submitting = false;
+          }, 20);
+        } else {
+          submitting = false;
+        }
+      } catch (err) {
+        debugLog('submitGuess ERROR: ' + err.message);
+        submitting = false;
       }
     }
 
@@ -714,8 +797,7 @@
       gameOver = true;
       won = false;
       saveScore();
-      render();
-      renderInputs();
+      fullRender();
     }
 
     function newGame() {
@@ -723,12 +805,14 @@
       guesses = [];
       gameOver = false;
       won = false;
+      submitting = false;
 
       var fg = generateDailyFreeGuess(todayKey);
       freeGuess = { guess: fg, result: evaluate(secret, fg) };
 
-      renderInputs();
-      render();
+      debugLog('New game. Secret: ' + JSON.stringify(secret) + ' Free: ' + JSON.stringify(fg));
+
+      fullRender();
       setTimeout(function() {
         var inputs = getDigitInputs();
         if (inputs.length > 0) inputs[0].focus();
@@ -739,6 +823,9 @@
     // INIT
     // =====================================================
     initAuth().then(function() {
+      newGame();
+    }).catch(function(err) {
+      debugLog('Init error: ' + err.message);
       newGame();
     });
   </script>
