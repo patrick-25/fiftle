@@ -120,7 +120,6 @@
     .badge.exact { background: #dcfce7; color: #166534; }
     .badge.misplaced { background: #fff7ed; color: #ea580c; }
 
-    /* Name modal */
     .modal-overlay {
       position: fixed; top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;
@@ -142,7 +141,6 @@
       font-size: 15px; font-weight: 700; cursor: pointer;
     }
 
-    /* Leaderboard */
     .lb-card {
       background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px;
       display: flex; align-items: center; justify-content: space-between;
@@ -164,7 +162,6 @@
     .lb-empty { text-align: center; padding: 30px; color: #94a3b8; font-size: 14px; }
     .lb-date { text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; }
 
-    /* Ghost replay */
     .replay-header { text-align: center; margin-bottom: 16px; }
     .replay-header h3 { font-size: 18px; font-weight: 800; color: #1e293b; }
     .replay-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
@@ -174,8 +171,6 @@
       background: #fff; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer;
     }
     .btn-replay-ctrl.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; }
-
-    .hidden { display: none; }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -207,7 +202,6 @@
       <button class="tab" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
     </div>
 
-    <!-- PLAY PANEL -->
     <div class="panel active" id="panel-play">
       <div class="stats-bar" id="stats-bar"></div>
       <div class="guess-list" id="guess-list"></div>
@@ -218,13 +212,11 @@
       <div id="banner-container"></div>
     </div>
 
-    <!-- LEADERBOARD PANEL -->
     <div class="panel" id="panel-leaderboard">
       <div class="lb-date" id="lb-date"></div>
       <div id="lb-list"><div class="lb-empty">No scores yet today — be the first!</div></div>
     </div>
 
-    <!-- REPLAY PANEL -->
     <div class="panel" id="panel-replay">
       <div class="replay-header">
         <h3 id="replay-title">Ghost Replay</h3>
@@ -239,7 +231,6 @@
     </div>
   </div>
 
-  <!-- NAME MODAL -->
   <div class="modal-overlay" id="name-modal" style="display:none;">
     <div class="modal">
       <h2>Welcome to Fiftle!</h2>
@@ -249,15 +240,11 @@
     </div>
   </div>
 
-  <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
   <script>
-    // =====================================================
-    // FIREBASE CONFIG — paste your config here
-    // =====================================================
     firebase.initializeApp({
       apiKey: "AIzaSyBYI2j_SWzdNUllOJphwbbA9sm9rpZe2wA",
       authDomain: "fiftle.firebaseapp.com",
@@ -272,9 +259,6 @@
     var currentUid = null;
     var playerName = null;
 
-    // =====================================================
-    // AUTH + NAME
-    // =====================================================
     function initAuth() {
       return auth.signInAnonymously().then(function(result) {
         currentUid = result.user.uid;
@@ -291,7 +275,8 @@
       playerName = name;
       localStorage.setItem('fiftle_player_name', name);
       document.getElementById('name-modal').style.display = 'none';
-      getDigitInputs()[0].focus();
+      var inputs = getDigitInputs();
+      if (inputs.length > 0) inputs[0].focus();
     }
 
     document.getElementById('name-input').addEventListener('keydown', function(e) {
@@ -299,7 +284,7 @@
     });
 
     // =====================================================
-    // DAILY CHALLENGE — seeded from date
+    // DAILY CHALLENGE
     // =====================================================
     function getTodayKey() {
       var d = new Date();
@@ -307,7 +292,6 @@
     }
 
     function seededRandom(seed) {
-      // Simple mulberry32 PRNG
       var t = seed | 0;
       return function() {
         t = (t + 0x6D2B79F5) | 0;
@@ -329,7 +313,6 @@
     function generateDailySecret(dateStr) {
       var rng = seededRandom(dateToSeed(dateStr));
       var digits = [0,1,2,3,4,5,6,7,8,9];
-      // Pick first digit (1-9)
       var firstIdx = Math.floor(rng() * 9) + 1;
       var first = digits.splice(firstIdx, 1)[0];
       var rest = [];
@@ -341,7 +324,6 @@
     }
 
     function generateDailyFreeGuess(dateStr) {
-      // Use a different seed offset for free guess
       var rng = seededRandom(dateToSeed(dateStr + '_free'));
       var digits = [0,1,2,3,4,5,6,7,8,9];
       var firstIdx = Math.floor(rng() * 9) + 1;
@@ -355,7 +337,7 @@
     }
 
     // =====================================================
-    // CORE GAME STATE
+    // GAME STATE
     // =====================================================
     var secret = [];
     var guesses = [];
@@ -398,7 +380,7 @@
     }
 
     // =====================================================
-    // FIREBASE: SAVE SCORE
+    // FIREBASE: SAVE + LEADERBOARD
     // =====================================================
     function saveScore() {
       if (!currentUid || !playerName) return;
@@ -418,9 +400,6 @@
       });
     }
 
-    // =====================================================
-    // FIREBASE: LEADERBOARD
-    // =====================================================
     function loadLeaderboard() {
       document.getElementById('lb-date').textContent = 'Daily challenge: ' + todayKey;
       db.collection('fiftle_scores')
@@ -652,15 +631,20 @@
     }
 
     // =====================================================
-    // INPUT HANDLERS
+    // INPUT HANDLERS — scoped to #digit-row
     // =====================================================
-    function getDigitInputs() { return document.querySelectorAll(".digit-input"); }
+    function getDigitInputs() {
+      return document.getElementById("digit-row").querySelectorAll("input");
+    }
 
     function onDigitInput(e) {
       var inp = e.target;
       var idx = parseInt(inp.dataset.idx);
       inp.value = inp.value.replace(/\D/g, "").slice(-1);
-      if (inp.value && idx < 4) getDigitInputs()[idx + 1].focus();
+      if (inp.value && idx < 4) {
+        var inputs = getDigitInputs();
+        inputs[idx + 1].focus();
+      }
     }
 
     function onDigitKeyDown(e) {
@@ -673,8 +657,9 @@
     }
 
     function clearInputs() {
-      getDigitInputs().forEach(function(inp) { inp.value = ""; });
-      getDigitInputs()[0].focus();
+      var inputs = getDigitInputs();
+      inputs.forEach(function(inp) { inp.value = ""; });
+      if (inputs.length > 0) inputs[0].focus();
     }
 
     function shakeInput() {
@@ -688,10 +673,23 @@
     // =====================================================
     function submitGuess() {
       if (gameOver) return;
-      var vals = Array.from(getDigitInputs()).map(function(inp) { return inp.value; });
-      if (vals.some(function(v) { return v === ""; })) { shakeInput(); return; }
+
+      var inputs = getDigitInputs();
+      var vals = [];
+      for (var i = 0; i < inputs.length; i++) {
+        vals.push(inputs[i].value);
+      }
+
+      if (vals.length !== 5 || vals.some(function(v) { return v === ""; })) {
+        shakeInput();
+        return;
+      }
+
       var guess = vals.map(Number);
-      if (new Set(guess).size !== 5) { shakeInput(); return; }
+      if (new Set(guess).size !== 5) {
+        shakeInput();
+        return;
+      }
 
       var result = evaluate(secret, guess);
       guesses.push({ guess: guess, result: result });
@@ -704,7 +702,12 @@
       }
 
       render();
-      if (!gameOver) clearInputs();
+      if (!gameOver) {
+        renderInputs();
+        setTimeout(function() { clearInputs(); }, 10);
+      } else {
+        renderInputs();
+      }
     }
 
     function giveUp() {
@@ -712,10 +715,10 @@
       won = false;
       saveScore();
       render();
+      renderInputs();
     }
 
     function newGame() {
-      // Daily mode: same secret all day, new random for extra games
       secret = generateDailySecret(todayKey);
       guesses = [];
       gameOver = false;
@@ -726,7 +729,10 @@
 
       renderInputs();
       render();
-      setTimeout(function() { getDigitInputs()[0].focus(); }, 50);
+      setTimeout(function() {
+        var inputs = getDigitInputs();
+        if (inputs.length > 0) inputs[0].focus();
+      }, 50);
     }
 
     // =====================================================
