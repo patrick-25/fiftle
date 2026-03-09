@@ -1,924 +1,880 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fiftle</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Patrick & Becky — Sprint Triathlon 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --warm-bg: #FDF8F4;
+    --patrick: #B94A3E;
+    --becky: #B76E79;
+    --joint: #2E86AB;
+    --gold: #B8860B;
+    --swim: #1565C0; --swim-bg: #E3F2FD; --swim-border: #64B5F6;
+    --bike: #E67E22; --bike-bg: #FFF3E0; --bike-border: #FFB74D;
+    --run: #2E7D32; --run-bg: #E8F5E9; --run-border: #81C784;
+    --weights: #7B1FA2; --weights-bg: #F3E5F5; --weights-border: #CE93D8;
+    --misc: #00838F; --misc-bg: #E0F7FA; --misc-border: #4DD0E1;
+    --race: #E65100; --race-bg: #FFF9C4; --race-border: #FFD54F;
+    --text: #2C2420; --text-muted: #8C7B6F; --text-light: #B5A89E;
+    --card-bg: rgba(255,255,255,0.72); --card-border: rgba(0,0,0,0.04);
+    --display-font: 'Playfair Display', Georgia, serif;
+    --body-font: 'Crimson Pro', Georgia, serif;
+    --ui-font: 'DM Sans', system-ui, sans-serif;
+  }
+  body { font-family: var(--body-font); background: var(--warm-bg); color: var(--text); min-height: 100vh; -webkit-font-smoothing: antialiased; }
+  body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse at 20% 10%, rgba(185,74,62,0.04) 0%, transparent 55%), radial-gradient(ellipse at 80% 90%, rgba(183,110,121,0.04) 0%, transparent 55%), radial-gradient(ellipse at 50% 50%, rgba(184,134,11,0.02) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .container { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; padding: 0 20px; }
 
-    body {
-      min-height: 100vh;
-      background: linear-gradient(160deg, #f8fafc 0%, #eef2ff 50%, #faf5ff 100%);
-      display: flex; justify-content: center; padding: 24px 16px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    }
+  .hero { text-align: center; padding: 52px 0 36px; }
+  .hero__eyebrow { font-family: var(--ui-font); font-size: 12px; font-weight: 700; letter-spacing: 5px; color: var(--gold); text-transform: uppercase; margin-bottom: 14px; }
+  .hero__title { font-family: var(--display-font); font-size: clamp(38px, 8vw, 60px); font-weight: 800; line-height: 1.05; letter-spacing: -1.5px; background: linear-gradient(140deg, var(--patrick) 0%, #D4634E 35%, var(--gold) 65%, var(--becky) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 10px; }
+  .hero__subtitle { font-family: var(--body-font); font-size: clamp(18px, 3.5vw, 24px); font-weight: 300; font-style: italic; color: var(--text-muted); }
 
-    #app { width: 100%; max-width: 500px; }
+  .stats-bar { display: flex; justify-content: center; gap: 36px; margin: 28px 0 8px; flex-wrap: wrap; }
+  .stat { text-align: center; }
+  .stat__label { font-family: var(--ui-font); font-size: 10px; font-weight: 700; letter-spacing: 3px; color: var(--text-light); text-transform: uppercase; margin-bottom: 2px; }
+  .stat__value { font-size: 22px; font-weight: 600; }
+  .stat__value--swim { color: var(--swim); }
+  .stat__value--bike { color: var(--bike); }
+  .stat__value--run { color: var(--run); }
+  .stat__arrow { color: #ddd; font-size: 22px; align-self: center; }
 
-    .header { text-align: center; margin-bottom: 20px; }
-    .header .emoji { font-size: 36px; margin-bottom: 2px; }
-    .header h1 { font-size: 26px; font-weight: 800; color: #1e293b; }
-    .header .sub { color: #64748b; font-size: 13px; margin-top: 4px; }
-    .header .legend { display: flex; justify-content: center; gap: 14px; margin-top: 6px; font-size: 12px; color: #94a3b8; }
 
-    .tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
-    .tab {
-      flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 700;
-      cursor: pointer; background: #fff; color: #64748b; border: none; transition: all 0.15s;
-    }
-    .tab.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
-    .tab:not(:last-child) { border-right: 1px solid #e2e8f0; }
+  /* Who am I banner */
+  .who-bar {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--card-border);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+    text-align: center;
+  }
+  .who-bar__label {
+    font-family: var(--ui-font);
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .who-bar__btns { display: flex; justify-content: center; gap: 12px; }
+  .who-btn {
+    font-family: var(--ui-font);
+    font-size: 14px;
+    font-weight: 700;
+    padding: 10px 32px;
+    border-radius: 100px;
+    border: 2px solid #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fff;
+    color: var(--text-muted);
+  }
+  .who-btn:hover { border-color: #bbb; }
+  .who-btn.active--patrick { background: var(--patrick); color: #fff; border-color: var(--patrick); box-shadow: 0 4px 16px rgba(185,74,62,0.25); }
+  .who-btn.active--becky { background: var(--becky); color: #fff; border-color: var(--becky); box-shadow: 0 4px 16px rgba(183,110,121,0.25); }
 
-    .panel { display: none; }
-    .panel.active { display: block; }
+  .progress-section { background: var(--card-bg); border-radius: 20px; padding: 24px 28px; margin-bottom: 32px; border: 1px solid var(--card-border); box-shadow: 0 2px 16px rgba(0,0,0,0.03); }
+  .progress-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .progress-header__title { font-family: var(--display-font); font-size: 20px; font-weight: 700; }
+  .progress-header__pct { font-family: var(--ui-font); font-size: 14px; font-weight: 700; color: var(--gold); }
+  .progress-track { height: 10px; background: #F0EBE5; border-radius: 100px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 100px; background: linear-gradient(90deg, var(--patrick), var(--gold), var(--becky)); transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1); }
+  .progress-people { display: flex; gap: 20px; margin-top: 14px; flex-wrap: wrap; }
+  .progress-person { font-family: var(--ui-font); font-size: 13px; color: var(--text-muted); }
+  .progress-person strong { font-weight: 700; }
+  .progress-person--patrick strong { color: var(--patrick); }
+  .progress-person--becky strong { color: var(--becky); }
+  .progress-person--joint strong { color: var(--joint); }
 
-    .stats-bar { display: flex; gap: 8px; margin-bottom: 16px; }
-    .stat-card {
-      flex: 1; padding: 10px 12px; border-radius: 10px;
-      background: rgba(248,250,252,0.8); border: 1px solid #e2e8f0; text-align: center;
-    }
-    .stat-card .val { font-size: 22px; font-weight: 800; color: #1e293b; font-family: 'JetBrains Mono', monospace; }
-    .stat-card .lbl { font-size: 11px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .stat-card .sub-text { font-size: 11px; color: #a5b4fc; margin-top: 2px; }
+  .filter-bar { display: flex; justify-content: center; gap: 8px; margin-bottom: 32px; flex-wrap: wrap; }
+  .filter-btn { font-family: var(--ui-font); font-size: 12px; font-weight: 600; letter-spacing: 1.2px; text-transform: uppercase; padding: 10px 22px; border-radius: 100px; border: none; cursor: pointer; transition: all 0.3s ease; background: rgba(255,255,255,0.5); color: var(--text-light); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+  .filter-btn:hover { background: rgba(255,255,255,0.8); color: var(--text-muted); }
+  .filter-btn.active { background: linear-gradient(135deg, var(--patrick), #D4634E); color: #fff; box-shadow: 0 4px 18px rgba(185,74,62,0.2); font-weight: 700; }
 
-    .guess-list { display: flex; flex-direction: column; gap: 6px; max-height: 350px; overflow-y: auto; padding-right: 4px; margin-bottom: 16px; }
+  .timeline { position: relative; padding-bottom: 48px; }
+  .timeline__line { position: absolute; left: 19px; top: 0; bottom: 48px; width: 2px; background: linear-gradient(to bottom, rgba(185,74,62,0.12), rgba(183,110,121,0.12), rgba(184,134,11,0.06)); border-radius: 1px; }
 
-    .input-area {
-      background: #fff; border-radius: 16px; padding: 20px 16px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
-      margin-bottom: 16px;
-    }
-    .input-area.shake { animation: shake 0.4s ease; }
+  .week { position: relative; margin-bottom: 10px; animation: fadeUp 0.4s ease both; }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .week__dot { position: absolute; left: 12px; top: 18px; width: 16px; height: 16px; border-radius: 50%; z-index: 2; transition: all 0.3s ease; border: 3px solid transparent; }
+  .week--race .week__dot { width: 20px; height: 20px; left: 10px; background: linear-gradient(135deg, #FFD700, #FFA000) !important; border-color: rgba(255,160,0,0.3) !important; box-shadow: 0 0 18px rgba(255,215,0,0.35); }
 
-    .digit-row { display: flex; justify-content: center; gap: 10px; margin-bottom: 14px; }
+  .week__card { margin-left: 48px; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--card-border); cursor: pointer; transition: all 0.3s ease; overflow: hidden; }
+  .week__card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.06); border-color: rgba(0,0,0,0.07); }
+  .week__card.expanded { background: rgba(255,255,255,0.95); box-shadow: 0 8px 36px rgba(0,0,0,0.07); }
+  .week--race .week__card { background: linear-gradient(135deg, #FFFDE7, #FFF8E1); border: 2px solid #FFD54F; box-shadow: 0 4px 24px rgba(255,215,0,0.12); }
 
-    .digit-input {
-      width: 48px; height: 60px; font-size: 26px; font-weight: 700; text-align: center;
-      border: 2px solid #d1d5db; border-radius: 12px; outline: none;
-      background: #fff; color: #1e293b; transition: all 0.15s ease;
-      font-family: 'JetBrains Mono', monospace;
-    }
-    .digit-input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
-    .digit-input:disabled { background: #f3f4f6; }
+  .week__header { padding: 14px 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .week__phase { font-family: var(--ui-font); font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 10px; border-radius: 100px; }
+  .week__number { font-family: var(--display-font); font-size: 17px; font-weight: 700; color: var(--text); }
+  .week__dates { font-family: var(--ui-font); font-size: 12px; color: var(--text-light); margin-left: auto; }
+  .week__chevron { font-size: 11px; color: #ccc; transition: transform 0.3s ease; }
+  .week__card.expanded .week__chevron { transform: rotate(180deg); }
 
-    .btn-row { display: flex; gap: 8px; }
+  .week__preview { display: flex; gap: 6px; padding: 0 20px 14px; flex-wrap: wrap; }
+  .preview-pip { font-size: 14px; background: #f7f4f0; border-radius: 8px; padding: 2px 8px; display: flex; align-items: center; gap: 2px; }
+  .preview-pip__tag { font-family: var(--ui-font); font-size: 8px; font-weight: 800; }
+  .preview-pip__tag--p { color: var(--patrick); }
+  .preview-pip__tag--b { color: var(--becky); }
+  .preview-pip__tag--j { color: var(--joint); }
 
-    .btn-guess {
-      flex: 1; padding: 11px 0; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
-    }
-    .btn-guess:disabled { background: #e2e8f0; color: #94a3b8; cursor: default; }
+  .week__complete-badge { font-family: var(--ui-font); font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--run); background: var(--run-bg); padding: 2px 8px; border-radius: 100px; }
 
-    .btn-giveup {
-      padding: 11px 16px; border-radius: 10px; border: 1px solid #fca5a5;
-      background: #fff; color: #dc2626; font-size: 14px; font-weight: 600; cursor: pointer;
-    }
+  .week__desc { margin-bottom: 16px; }
+  .week__desc-text { font-family: var(--body-font); font-size: 14px; line-height: 1.6; color: var(--text-muted); font-style: italic; padding: 12px 16px; background: rgba(255,249,230,0.5); border-radius: 12px; border-left: 3px solid var(--gold); }
+  .week__desc-text .nutri { display: block; margin-top: 8px; font-style: normal; font-family: var(--ui-font); font-size: 12px; font-weight: 600; color: var(--gold); }
 
-    .btn-new { padding: 11px 20px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .week__body { padding: 0 20px 20px; }
+  .person-label { font-family: var(--ui-font); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding-bottom: 6px; margin-bottom: 12px; border-bottom: 1px solid; }
+  .person-label--joint { color: var(--joint); border-color: rgba(46,134,171,0.15); }
+  .person-label--patrick { color: var(--patrick); border-color: rgba(185,74,62,0.1); margin-top: 16px; }
+  .person-label--becky { color: var(--becky); border-color: rgba(183,110,121,0.12); margin-top: 16px; }
 
-    .btn-share {
-      padding: 11px 20px; border-radius: 10px; border: none;
-      background: #25D366; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
-      display: inline-flex; align-items: center; gap: 6px;
-    }
+  .session { border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; border-left: 3px solid; transition: background 0.2s ease; display: flex; gap: 12px; align-items: flex-start; }
+  .session:hover { filter: brightness(0.98); }
+  .session--swim { border-color: var(--swim-border); background: rgba(227,242,253,0.4); }
+  .session--swim:hover { background: var(--swim-bg); }
+  .session--bike { border-color: var(--bike-border); background: rgba(255,243,224,0.4); }
+  .session--bike:hover { background: var(--bike-bg); }
+  .session--run { border-color: var(--run-border); background: rgba(232,245,233,0.4); }
+  .session--run:hover { background: var(--run-bg); }
+  .session--weights { border-color: var(--weights-border); background: rgba(243,229,245,0.4); }
+  .session--weights:hover { background: var(--weights-bg); }
+  .session--misc { border-color: var(--misc-border); background: rgba(224,247,250,0.4); }
+  .session--misc:hover { background: var(--misc-bg); }
+  .session--race { border-color: var(--race-border); background: rgba(255,249,196,0.5); }
+  .session--race:hover { background: var(--race-bg); }
 
-    .banner { padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; text-align: center; }
-    .banner.win { background: linear-gradient(135deg, #dcfce7, #d1fae5); border: 1px solid #86efac; }
-    .banner.lose { background: linear-gradient(135deg, #fee2e2, #fef2f2); border: 1px solid #fca5a5; }
-    .banner .banner-emoji { font-size: 26px; margin-bottom: 2px; }
-    .banner.win .banner-text { font-weight: 700; font-size: 16px; color: #166534; }
-    .banner.lose .banner-text { font-weight: 700; font-size: 16px; color: #991b1b; }
-    .banner .banner-sub { font-size: 13px; color: #166534; margin-top: 4px; }
-    .banner .banner-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .session__check { flex-shrink: 0; width: 22px; height: 22px; border-radius: 6px; border: 2px solid #ccc; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.25s ease; margin-top: 2px; background: #fff; }
+  .session__check:hover { border-color: var(--gold); }
+  .session__check.checked { background: linear-gradient(135deg, var(--patrick), var(--becky)); border-color: transparent; box-shadow: 0 2px 8px rgba(185,74,62,0.2); }
+  .session__check.checked::after { content: '\2713'; color: #fff; font-size: 13px; font-weight: 700; }
+  .session.completed { opacity: 0.55; }
+  .session.completed .session__label { text-decoration: line-through; }
 
-    .guess-row {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0;
-      background: rgba(248,250,252,0.8);
-    }
-    .guess-row.freebie { background: rgba(238,242,255,0.7); border: 1px dashed #a5b4fc; }
-    .guess-row.winner { background: linear-gradient(135deg, #dcfce7, #d1fae5); border: 1px solid #86efac; }
+  .session__content { flex: 1; min-width: 0; }
+  .session__top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .session__icon { font-size: 18px; }
+  .session__day { font-family: var(--ui-font); font-size: 11px; color: var(--text-light); font-weight: 600; min-width: 32px; }
+  .session__label { font-family: var(--ui-font); font-size: 14px; font-weight: 600; transition: all 0.2s ease; }
+  .session--swim .session__label { color: var(--swim); }
+  .session--bike .session__label { color: var(--bike); }
+  .session--run .session__label { color: var(--run); }
+  .session--weights .session__label { color: var(--weights); }
+  .session--misc .session__label { color: var(--misc); }
+  .session--race .session__label { color: var(--race); }
+  .session__details { font-family: var(--body-font); font-size: 14px; color: var(--text-muted); margin-top: 5px; line-height: 1.55; }
+  .session__joint-badge { display: inline-block; font-family: var(--ui-font); font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; background: var(--joint); padding: 2px 7px; border-radius: 100px; }
 
-    .guess-left { display: flex; align-items: center; gap: 10px; }
-    .guess-idx { font-size: 12px; font-weight: 600; width: 28px; font-family: monospace; color: #94a3b8; }
-    .guess-row.freebie .guess-idx { color: #818cf8; }
-    .guess-digits { display: flex; gap: 4px; }
-    .guess-digit {
-      width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
-      border-radius: 7px; font-weight: 700; font-size: 16px;
-      font-family: 'JetBrains Mono', monospace; background: #e2e8f0; color: #1e293b;
-    }
-    .guess-row.freebie .guess-digit { background: #e0e7ff; }
-    .guess-row.winner .guess-digit { background: #bbf7d0; }
-    .guess-right { display: flex; gap: 6px; }
+  .reset-bar { text-align: center; padding-bottom: 48px; }
+  .reset-btn { font-family: var(--ui-font); font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-light); background: none; border: 1px solid rgba(0,0,0,0.08); border-radius: 100px; padding: 8px 20px; cursor: pointer; transition: all 0.2s ease; }
+  .reset-btn:hover { color: var(--patrick); border-color: rgba(185,74,62,0.2); }
 
-    .badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 20px; font-size: 13px; font-weight: 600; }
-    .badge.exact { background: #dcfce7; color: #166534; }
-    .badge.misplaced { background: #fff7ed; color: #ea580c; }
+  .phase--foundation { background: #E8F5E9; color: #2E7D32; }
+  .phase--build { background: #FFF3E0; color: #E65100; }
+  .phase--peak { background: #FCE4EC; color: #C62828; }
+  .phase--sharpen { background: #E8EAF6; color: #283593; }
+  .phase--taper { background: #F3E5F5; color: #6A1B9A; }
+  .phase--race { background: #FFF9C4; color: #F57F17; }
+  .dot--foundation { background: #81C784; border-color: rgba(46,125,50,0.2); }
+  .dot--build { background: #FFB74D; border-color: rgba(230,81,0,0.2); }
+  .dot--peak { background: #F48FB1; border-color: rgba(198,40,40,0.2); }
+  .dot--sharpen { background: #9FA8DA; border-color: rgba(40,53,147,0.2); }
+  .dot--taper { background: #CE93D8; border-color: rgba(106,27,154,0.2); }
 
-    .modal-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;
-    }
-    .modal {
-      background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 360px; width: 90%; text-align: center;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-    }
-    .modal h2 { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
-    .modal p { font-size: 14px; color: #64748b; margin-bottom: 16px; }
-    .modal input {
-      width: 100%; padding: 12px 16px; border: 2px solid #d1d5db; border-radius: 10px;
-      font-size: 16px; outline: none; margin-bottom: 12px; font-family: inherit;
-    }
-    .modal input:focus { border-color: #6366f1; }
-    .modal button {
-      width: 100%; padding: 12px; border-radius: 10px; border: none;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
-      font-size: 15px; font-weight: 700; cursor: pointer;
-    }
+  /* Toast notification */
+  .toast {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px);
+    font-family: var(--ui-font); font-size: 14px; font-weight: 600;
+    background: var(--text); color: #fff; padding: 12px 24px; border-radius: 100px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2); z-index: 100;
+    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease;
+    opacity: 0; pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 
-    .lb-card {
-      background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px;
-      display: flex; align-items: center; justify-content: space-between;
-      border: 1px solid #e2e8f0;
-    }
-    .lb-card.you { border-color: #a5b4fc; background: #eef2ff; }
-    .lb-rank { font-size: 20px; font-weight: 800; color: #94a3b8; width: 36px; font-family: 'JetBrains Mono', monospace; }
-    .lb-card:nth-child(1) .lb-rank { color: #f59e0b; }
-    .lb-card:nth-child(2) .lb-rank { color: #94a3b8; }
-    .lb-card:nth-child(3) .lb-rank { color: #cd7f32; }
-    .lb-name { font-weight: 700; font-size: 15px; color: #1e293b; flex: 1; }
-    .lb-score { font-weight: 800; font-size: 18px; color: #6366f1; font-family: 'JetBrains Mono', monospace; }
-    .lb-detail { font-size: 12px; color: #94a3b8; margin-left: 4px; }
-    .lb-replay {
-      margin-left: 10px; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0;
-      background: #fff; color: #6366f1; font-size: 12px; font-weight: 700; cursor: pointer;
-    }
-    .lb-replay:hover { background: #eef2ff; }
-    .lb-empty { text-align: center; padding: 30px; color: #94a3b8; font-size: 14px; }
-    .lb-date { text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; }
-
-    .replay-header { text-align: center; margin-bottom: 16px; }
-    .replay-header h3 { font-size: 18px; font-weight: 800; color: #1e293b; }
-    .replay-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
-    .replay-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
-    .btn-replay-ctrl {
-      padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0;
-      background: #fff; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer;
-    }
-    .btn-replay-ctrl.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; }
-
-    #debug-log {
-      position: fixed; bottom: 0; left: 0; right: 0; max-height: 150px; overflow-y: auto;
-      background: rgba(0,0,0,0.85); color: #0f0; font-family: monospace; font-size: 11px;
-      padding: 8px; z-index: 9999; display: none;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-8px); }
-      40% { transform: translateX(8px); }
-      60% { transform: translateX(-4px); }
-      80% { transform: translateX(4px); }
-    }
-
-    ::-webkit-scrollbar { width: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-  </style>
+  @media (max-width: 500px) {
+    .stats-bar { gap: 18px; }
+    .week__header { padding: 12px 14px; }
+    .week__body { padding: 0 14px 16px; }
+    .session { padding: 10px 12px; }
+    .filter-btn { padding: 8px 16px; font-size: 11px; }
+    .who-btn { padding: 8px 24px; font-size: 13px; }
+  }
+</style>
 </head>
 <body>
-  <div id="app">
-    <div class="header">
-      <div class="emoji">🔢</div>
-      <h1>Fiftle</h1>
-      <div class="sub">Crack the five digit code, digits 0-9, each digit is unique</div>
-      <div class="legend">
-        <span>✅ Right number, right place</span>
-        <span><svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg> Right number, wrong place</span>
-      </div>
-    </div>
-
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('play')">🎮 Play</button>
-      <button class="tab" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
-    </div>
-
-    <div class="panel active" id="panel-play">
-      <div class="stats-bar" id="stats-bar"></div>
-      <div class="guess-list" id="guess-list"></div>
-      <div class="input-area" id="input-area">
-        <div class="digit-row" id="digit-row"></div>
-        <div class="btn-row" id="btn-row"></div>
-      </div>
-      <div id="banner-container"></div>
-    </div>
-
-    <div class="panel" id="panel-leaderboard">
-      <div class="lb-date" id="lb-date"></div>
-      <div id="lb-list"><div class="lb-empty">No scores yet today — be the first!</div></div>
-    </div>
-
-    <div class="panel" id="panel-replay">
-      <div class="replay-header">
-        <h3 id="replay-title">Ghost Replay</h3>
-        <p id="replay-sub"></p>
-      </div>
-      <div class="replay-controls">
-        <button class="btn-replay-ctrl" onclick="replayPrev()">⬅ Prev</button>
-        <button class="btn-replay-ctrl primary" onclick="replayNext()">Next ➡</button>
-        <button class="btn-replay-ctrl" onclick="switchTab('leaderboard')">✕ Close</button>
-      </div>
-      <div class="guess-list" id="replay-guess-list"></div>
-    </div>
-  </div>
-
-  <div class="modal-overlay" id="name-modal" style="display:none;">
-    <div class="modal">
-      <h2>Welcome to Fiftle!</h2>
-      <p>Pick a name for the family leaderboard</p>
-      <input type="text" id="name-input" placeholder="Your name" maxlength="20" autocomplete="off">
-      <button onclick="saveName()">Let's go!</button>
-    </div>
-  </div>
-
-  <div id="debug-log"></div>
-
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-
-  <script>
-    // =====================================================
-    // DEBUG
-    // =====================================================
-    var debugEl = document.getElementById('debug-log');
-    var tapCount = 0;
-    var tapTimer = null;
-    document.querySelector('.header h1').addEventListener('click', function() {
-      tapCount++;
-      clearTimeout(tapTimer);
-      tapTimer = setTimeout(function() { tapCount = 0; }, 500);
-      if (tapCount >= 3) {
-        tapCount = 0;
-        debugEl.style.display = debugEl.style.display === 'none' ? 'block' : 'none';
-      }
-    });
-    function debugLog(msg) {
-      console.log('[Fiftle]', msg);
-      var line = document.createElement('div');
-      line.textContent = new Date().toLocaleTimeString() + ' ' + msg;
-      debugEl.appendChild(line);
-      debugEl.scrollTop = debugEl.scrollHeight;
-    }
-
-    // =====================================================
-    // FIREBASE
-    // =====================================================
-    firebase.initializeApp({
-      apiKey: "AIzaSyBYI2j_SWzdNUllOJphwbbA9sm9rpZe2wA",
-      authDomain: "fiftle.firebaseapp.com",
-      projectId: "fiftle",
-      storageBucket: "fiftle.firebasestorage.app",
-      messagingSenderId: "754895399211",
-      appId: "1:754895399211:web:f30b6953a2a7a55ccb3d6e"
-    });
-
-    var db = firebase.firestore();
-    var auth = firebase.auth();
-    var currentUid = null;
-    var playerName = null;
-
-    function initAuth() {
-      return auth.signInAnonymously().then(function(result) {
-        currentUid = result.user.uid;
-        debugLog('Auth OK: ' + currentUid);
-        playerName = localStorage.getItem('fiftle_player_name');
-        if (!playerName) {
-          document.getElementById('name-modal').style.display = 'flex';
-        }
-      }).catch(function(err) {
-        debugLog('Auth FAILED: ' + err.message);
-      });
-    }
-
-    function saveName() {
-      var name = document.getElementById('name-input').value.trim();
-      if (!name) return;
-      playerName = name;
-      localStorage.setItem('fiftle_player_name', name);
-      document.getElementById('name-modal').style.display = 'none';
-      var inputs = getDigitInputs();
-      if (inputs.length > 0) inputs[0].focus();
-    }
-
-    document.getElementById('name-input').addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') saveName();
-    });
-
-    // =====================================================
-    // DAILY CHALLENGE
-    // =====================================================
-    function getTodayKey() {
-      var d = new Date();
-      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    }
-
-    function seededRandom(seed) {
-      var t = seed | 0;
-      return function() {
-        t = (t + 0x6D2B79F5) | 0;
-        var x = Math.imul(t ^ (t >>> 15), 1 | t);
-        x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
-        return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
-      };
-    }
-
-    function dateToSeed(dateStr) {
-      var hash = 0;
-      for (var i = 0; i < dateStr.length; i++) {
-        hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
-        hash = hash & hash;
-      }
-      return Math.abs(hash);
-    }
-
-    function generateDailySecret(dateStr) {
-      var rng = seededRandom(dateToSeed(dateStr));
-      var digits = [0,1,2,3,4,5,6,7,8,9];
-      var firstIdx = Math.floor(rng() * 9) + 1;
-      var first = digits.splice(firstIdx, 1)[0];
-      var rest = [];
-      for (var i = 0; i < 4; i++) {
-        var idx = Math.floor(rng() * digits.length);
-        rest.push(digits.splice(idx, 1)[0]);
-      }
-      return [first].concat(rest);
-    }
-
-    function generateDailyFreeGuess(dateStr) {
-      var rng = seededRandom(dateToSeed(dateStr + '_free'));
-      var digits = [0,1,2,3,4,5,6,7,8,9];
-      var firstIdx = Math.floor(rng() * 9) + 1;
-      var first = digits.splice(firstIdx, 1)[0];
-      var rest = [];
-      for (var i = 0; i < 4; i++) {
-        var idx = Math.floor(rng() * digits.length);
-        rest.push(digits.splice(idx, 1)[0]);
-      }
-      return [first].concat(rest);
-    }
-
-    // =====================================================
-    // GAME STATE
-    // =====================================================
-    var secret = [];
-    var guesses = [];
-    var gameOver = false;
-    var won = false;
-    var completedGames = [];
-    var freeGuess = null;
-    var todayKey = getTodayKey();
-    var submitting = false;
-
-    var SQUIGGLE_SVG = '<svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle; margin-right: 2px;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
-
-    function evaluate(sec, guess) {
-      var exact = 0, misplaced = 0;
-      for (var i = 0; i < guess.length; i++) {
-        if (guess[i] === sec[i]) {
-          exact++;
-        } else if (sec.indexOf(guess[i]) !== -1) {
-          misplaced++;
-        }
-      }
-      return { exact: exact, misplaced: misplaced };
-    }
-
-    function evaluatePerDigit(sec, guess) {
-      return guess.map(function(d, i) {
-        if (d === sec[i]) return 'exact';
-        if (sec.indexOf(d) !== -1) return 'misplaced';
-        return 'wrong';
-      });
-    }
-
-    // =====================================================
-    // SAVE / LOAD GAME STATE
-    // =====================================================
-    function getDocId() {
-      return todayKey + '_' + currentUid;
-    }
-
-    function saveGameState() {
-      if (!currentUid || !playerName) {
-        debugLog('saveGameState skipped: no uid or name');
-        return;
-      }
-      try {
-        var allGuessArrays = [];
-        if (freeGuess) allGuessArrays.push(freeGuess.guess);
-        guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
-
-        var data = {
-          date: todayKey,
-          playerId: currentUid,
-          playerName: playerName,
-          guessCount: guesses.length,
-          guesses: allGuessArrays,
-          won: won,
-          gameOver: gameOver,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        };
-
-        db.collection('fiftle_scores').doc(getDocId()).set(data).then(function() {
-          debugLog('Game state saved OK');
-        }).catch(function(err) {
-          debugLog('Save error: ' + err.message);
-        });
-      } catch (err) {
-        debugLog('saveGameState exception: ' + err.message);
-      }
-    }
-
-    function loadGameState() {
-      if (!currentUid) {
-        debugLog('loadGameState skipped: no uid');
-        return Promise.resolve(null);
-      }
-
-      return db.collection('fiftle_scores').doc(getDocId()).get().then(function(doc) {
-        if (!doc.exists) {
-          debugLog('No saved game for today');
-          return null;
-        }
-        var data = doc.data();
-        debugLog('Loaded saved game: won=' + data.won + ' gameOver=' + data.gameOver + ' guesses=' + data.guessCount);
-        return data;
-      }).catch(function(err) {
-        debugLog('Load error: ' + err.message);
-        return null;
-      });
-    }
-
-    function restoreGame(data) {
-      secret = generateDailySecret(todayKey);
-      var fg = generateDailyFreeGuess(todayKey);
-      freeGuess = { guess: fg, result: evaluate(secret, fg) };
-
-      // Rebuild guesses from saved data (skip first entry which is the free guess)
-      guesses = [];
-      var savedGuesses = data.guesses || [];
-      for (var i = 1; i < savedGuesses.length; i++) {
-        var g = savedGuesses[i];
-        var result = evaluate(secret, g);
-        guesses.push({ guess: g, result: result });
-      }
-
-      won = data.won || false;
-      gameOver = data.gameOver || false;
-
-      if (won) {
-        completedGames.push(guesses.length);
-      }
-
-      debugLog('Restored: ' + guesses.length + ' guesses, gameOver=' + gameOver + ' won=' + won);
-
-      fullRender();
-    }
-
-    // =====================================================
-    // TABS
-    // =====================================================
-    function switchTab(tab) {
-      document.querySelectorAll('.tab').forEach(function(t, i) {
-        t.classList.toggle('active', (tab === 'play' && i === 0) || (tab === 'leaderboard' && i === 1));
-      });
-      document.getElementById('panel-play').classList.toggle('active', tab === 'play');
-      document.getElementById('panel-leaderboard').classList.toggle('active', tab === 'leaderboard');
-      document.getElementById('panel-replay').classList.toggle('active', tab === 'replay');
-      if (tab === 'leaderboard') loadLeaderboard();
-    }
-
-    // =====================================================
-    // LEADERBOARD
-    // =====================================================
-    function loadLeaderboard() {
-      document.getElementById('lb-date').textContent = 'Daily challenge: ' + todayKey;
-      db.collection('fiftle_scores')
-        .where('date', '==', todayKey)
-        .where('gameOver', '==', true)
-        .orderBy('won', 'desc')
-        .orderBy('guessCount', 'asc')
-        .get()
-        .then(function(snapshot) {
-          var list = document.getElementById('lb-list');
-          if (snapshot.empty) {
-            list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
-            return;
-          }
-          var html = '';
-          var rank = 0;
-          snapshot.forEach(function(doc) {
-            rank++;
-            var d = doc.data();
-            var isYou = d.playerId === currentUid;
-            var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
-            html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
-              '<span class="lb-rank">' + rank + '</span>' +
-              '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
-              '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
-              '<span class="lb-detail">' + status + '</span>' +
-              '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
-            '</div>';
-          });
-          list.innerHTML = html;
-        }).catch(function(err) {
-          debugLog('Leaderboard error: ' + err.message);
-          // Fallback query without gameOver filter (for older data)
-          db.collection('fiftle_scores')
-            .where('date', '==', todayKey)
-            .orderBy('won', 'desc')
-            .orderBy('guessCount', 'asc')
-            .get()
-            .then(function(snapshot) {
-              var list = document.getElementById('lb-list');
-              if (snapshot.empty) {
-                list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
-                return;
-              }
-              var html = '';
-              var rank = 0;
-              snapshot.forEach(function(doc) {
-                rank++;
-                var d = doc.data();
-                var isYou = d.playerId === currentUid;
-                var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
-                html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
-                  '<span class="lb-rank">' + rank + '</span>' +
-                  '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
-                  '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
-                  '<span class="lb-detail">' + status + '</span>' +
-                  '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
-                '</div>';
-              });
-              list.innerHTML = html;
-            });
-        });
-    }
-
-    function escHtml(str) {
-      var div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
-    }
-
-    // =====================================================
-    // GHOST REPLAY
-    // =====================================================
-    var replayData = null;
-    var replayStep = 0;
-
-    function startReplay(docId) {
-      db.collection('fiftle_scores').doc(docId).get().then(function(doc) {
-        if (!doc.exists) return;
-        replayData = doc.data();
-        replayStep = 0;
-        switchTab('replay');
-        document.getElementById('replay-title').textContent = '👻 ' + escHtml(replayData.playerName) + "'s game";
-        var status = replayData.won ? ('Solved in ' + replayData.guessCount + ' guesses') : 'Gave up';
-        document.getElementById('replay-sub').textContent = status + ' — step through their guesses';
-        renderReplay();
-      });
-    }
-
-    function replayNext() {
-      if (!replayData) return;
-      if (replayStep < replayData.guesses.length) {
-        replayStep++;
-        renderReplay();
-      }
-    }
-
-    function replayPrev() {
-      if (!replayData) return;
-      if (replayStep > 0) {
-        replayStep--;
-        renderReplay();
-      }
-    }
-
-    function renderReplay() {
-      var list = document.getElementById('replay-guess-list');
-      var html = '';
-      var dailySecret = generateDailySecret(replayData.date);
-      for (var i = 0; i < replayStep; i++) {
-        var g = replayData.guesses[i];
-        var result = evaluate(dailySecret, g);
-        var isFree = (i === 0);
-        html += makeGuessRowHTML(g, result, isFree ? 0 : i, isFree);
-      }
-      if (replayStep === 0) {
-        html = '<div class="lb-empty">Press Next ➡ to step through guesses</div>';
-      }
-      list.innerHTML = html;
-      document.getElementById('replay-sub').textContent =
-        'Showing ' + replayStep + ' of ' + replayData.guesses.length + ' guesses';
-    }
-
-    // =====================================================
-    // RENDERING
-    // =====================================================
-    function renderStats() {
-      var total = completedGames.length;
-      var avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : "\u2014";
-      var best = total > 0 ? Math.min.apply(null, completedGames) : "\u2014";
-      var html =
-        '<div class="stat-card"><div class="val">' + total + '</div><div class="lbl">Games Won</div></div>' +
-        '<div class="stat-card"><div class="val">' + avg + '</div><div class="lbl">Avg Guesses</div></div>' +
-        '<div class="stat-card"><div class="val">' + best + '</div><div class="lbl">Best</div></div>';
-      if (!gameOver) {
-        html += '<div class="stat-card"><div class="val">' + guesses.length + '</div><div class="lbl">Current</div><div class="sub-text">guesses</div></div>';
-      }
-      document.getElementById("stats-bar").innerHTML = html;
-    }
-
-    function renderInputs() {
-      var row = document.getElementById("digit-row");
-      row.innerHTML = "";
-      for (var i = 0; i < 5; i++) {
-        var inp = document.createElement("input");
-        inp.type = "text";
-        inp.inputMode = "numeric";
-        inp.maxLength = 1;
-        inp.className = "digit-input";
-        inp.disabled = gameOver;
-        inp.dataset.idx = String(i);
-        inp.addEventListener("input", onDigitInput);
-        inp.addEventListener("keydown", onDigitKeyDown);
-        row.appendChild(inp);
-      }
-    }
-
-    function renderButtons() {
-      var row = document.getElementById("btn-row");
-      var html = "";
-      if (!gameOver) {
-        html += '<button class="btn-guess" onclick="submitGuess()">Guess</button>';
-        if (guesses.length > 0) {
-          html += '<button class="btn-giveup" onclick="giveUp()">Give Up</button>';
-        }
-      } else {
-        html += '<button class="btn-guess" disabled>Guess</button>';
-        html += '<button class="btn-new" onclick="newGame()">New Game</button>';
-      }
-      row.innerHTML = html;
-    }
-
-    function buildShareText() {
-      var allGuesses = [];
-      if (freeGuess) allGuesses.push(freeGuess);
-      guesses.forEach(function(g) { allGuesses.push(g); });
-      var lines = allGuesses.map(function(g) {
-        var colours = evaluatePerDigit(secret, g.guess);
-        return colours.map(function(c) {
-          if (c === 'exact') return '🟩';
-          if (c === 'misplaced') return '🟧';
-          return '⬜';
-        }).join('');
-      });
-      var header = '🔢 Fiftle ' + todayKey;
-      if (won) {
-        header += ' — cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!';
-      } else {
-        header += ' — gave up 😔';
-      }
-      return header + '\n\n' + lines.join('\n') + '\n\nPlay at fiftle.xyz';
-    }
-
-    function shareWhatsApp() {
-      window.open('https://wa.me/?text=' + encodeURIComponent(buildShareText()), '_blank');
-    }
-
-    function copyResult() {
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(buildShareText()).then(function() {
-          var btn = document.getElementById('btn-copy');
-          if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 1500); }
-        });
-      }
-    }
-
-    function renderBanner() {
-      var container = document.getElementById("banner-container");
-      if (!gameOver) { container.innerHTML = ""; return; }
-      var total = completedGames.length;
-      var avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : null;
-
-      var shareButtons = '<div class="banner-actions">' +
-        '<button class="btn-share" onclick="shareWhatsApp()"><svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg> WhatsApp</button>' +
-        '<button class="btn-new" id="btn-copy" onclick="copyResult()" style="font-size:14px;">📋 Copy</button>' +
-        '</div>';
-
-      if (won) {
-        var sub = "";
-        if (total > 1) sub = '<div class="banner-sub">Session average: ' + avg + ' guesses over ' + total + ' game' + (total > 1 ? 's' : '') + '</div>';
-        container.innerHTML = '<div class="banner win"><div class="banner-emoji">🎉</div><div class="banner-text">Cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!</div>' + sub + shareButtons + '</div>';
-      } else {
-        container.innerHTML = '<div class="banner lose"><div class="banner-emoji">😔</div><div class="banner-text">The number was ' + secret.join("") + '</div>' + shareButtons + '</div>';
-      }
-    }
-
-    function makeGuessRowHTML(guess, result, index, isFreebie) {
-      var cls = "guess-row";
-      if (isFreebie) cls += " freebie";
-      if (result.exact === 5) cls += " winner";
-      var label = isFreebie ? "free" : "#" + index;
-      var digitsHTML = guess.map(function(d) { return '<span class="guess-digit">' + d + '</span>'; }).join("");
-      return '<div class="' + cls + '">' +
-        '<div class="guess-left">' +
-          '<span class="guess-idx">' + label + '</span>' +
-          '<div class="guess-digits">' + digitsHTML + '</div>' +
-        '</div>' +
-        '<div class="guess-right">' +
-          '<span class="badge exact">✅ ' + result.exact + '</span>' +
-          '<span class="badge misplaced">' + SQUIGGLE_SVG + ' ' + result.misplaced + '</span>' +
-        '</div>' +
-      '</div>';
-    }
-
-    function renderGuessList() {
-      var list = document.getElementById("guess-list");
-      var html = "";
-      if (freeGuess) html += makeGuessRowHTML(freeGuess.guess, freeGuess.result, 0, true);
-      guesses.forEach(function(g, i) {
-        html += makeGuessRowHTML(g.guess, g.result, i + 1, false);
-      });
-      list.innerHTML = html;
-      list.scrollTop = list.scrollHeight;
-    }
-
-    function fullRender() {
-      renderStats();
-      renderButtons();
-      renderBanner();
-      renderGuessList();
-      renderInputs();
-    }
-
-    // =====================================================
-    // INPUT HANDLERS
-    // =====================================================
-    function getDigitInputs() {
-      return document.getElementById("digit-row").querySelectorAll("input");
-    }
-
-    function onDigitInput(e) {
-      var inp = e.target;
-      var idx = parseInt(inp.dataset.idx);
-      inp.value = inp.value.replace(/\D/g, "").slice(-1);
-      if (inp.value && idx < 4) {
-        var inputs = getDigitInputs();
-        inputs[idx + 1].focus();
-      }
-    }
-
-    function onDigitKeyDown(e) {
-      var idx = parseInt(e.target.dataset.idx);
-      var inputs = getDigitInputs();
-      if (e.key === "Backspace" && !e.target.value && idx > 0) {
-        inputs[idx - 1].focus();
-      }
-      if (e.key === "Enter") {
-        e.preventDefault();
-        submitGuess();
-      }
-      if (e.key === "ArrowLeft" && idx > 0) inputs[idx - 1].focus();
-      if (e.key === "ArrowRight" && idx < 4) inputs[idx + 1].focus();
-    }
-
-    function clearInputs() {
-      var inputs = getDigitInputs();
-      inputs.forEach(function(inp) { inp.value = ""; });
-      if (inputs.length > 0) inputs[0].focus();
-    }
-
-    function shakeInput() {
-      var area = document.getElementById("input-area");
-      area.classList.add("shake");
-      setTimeout(function() { area.classList.remove("shake"); }, 500);
-    }
-
-    // =====================================================
-    // GAME ACTIONS
-    // =====================================================
-    function submitGuess() {
-      debugLog('submitGuess called. gameOver=' + gameOver + ' submitting=' + submitting);
-
-      if (gameOver || submitting) return;
-      submitting = true;
-
-      try {
-        var inputs = getDigitInputs();
-        var vals = [];
-        for (var i = 0; i < inputs.length; i++) {
-          vals.push(inputs[i].value);
-        }
-        debugLog('Input values: ' + JSON.stringify(vals));
-
-        if (vals.length !== 5 || vals.some(function(v) { return v === ""; })) {
-          shakeInput();
-          submitting = false;
-          return;
-        }
-
-        var guess = vals.map(Number);
-        debugLog('Guess: ' + JSON.stringify(guess) + ' Secret: ' + JSON.stringify(secret));
-
-        if (new Set(guess).size !== 5) {
-          shakeInput();
-          submitting = false;
-          return;
-        }
-
-        var result = evaluate(secret, guess);
-        debugLog('Result: exact=' + result.exact + ' misplaced=' + result.misplaced);
-
-        guesses.push({ guess: guess, result: result });
-
-        if (result.exact === 5) {
-          debugLog('WIN!');
-          won = true;
-          gameOver = true;
-          completedGames.push(guesses.length);
-        }
-
-        // Save to Firebase after every guess (persists progress)
-        saveGameState();
-
-        fullRender();
-
-        if (!gameOver) {
-          setTimeout(function() {
-            clearInputs();
-            submitting = false;
-          }, 20);
+<div class="container">
+  <div class="hero">
+    <div class="hero__eyebrow">Sprint Triathlon &middot; 25 July 2026</div>
+    <h1 class="hero__title">Patrick &amp; Becky</h1>
+    <div class="hero__subtitle" id="countdown"></div>
+    <script>
+      (function(){
+        const raceDate = new Date(2026, 6, 25); // July 25, 2026
+        const now = new Date();
+        const diff = Math.ceil((raceDate - now) / (1000 * 60 * 60 * 24));
+        const el = document.getElementById("countdown");
+        if (diff > 0) {
+          el.textContent = diff + " days to race day";
+        } else if (diff === 0) {
+          el.innerHTML = "\uD83C\uDFC6 RACE DAY! GO SMASH IT! \uD83C\uDFC6";
         } else {
-          submitting = false;
+          el.textContent = "Race complete!";
         }
-      } catch (err) {
-        debugLog('submitGuess ERROR: ' + err.message);
-        submitting = false;
+      })();
+    </script>
+    <div class="stats-bar">
+      <div class="stat"><div class="stat__label">Swim</div><div class="stat__value stat__value--swim">750m</div></div>
+      <div class="stat__arrow">&rarr;</div>
+      <div class="stat"><div class="stat__label">Bike</div><div class="stat__value stat__value--bike">20km</div></div>
+      <div class="stat__arrow">&rarr;</div>
+      <div class="stat"><div class="stat__label">Run</div><div class="stat__value stat__value--run">5km</div></div>
+    </div>
+  </div>
+
+  <!-- Pace gauges -->
+  <div id="pace-gauges" style="background:var(--card-bg);border-radius:20px;padding:28px 20px 20px;border:1px solid var(--card-border);margin-bottom:24px;box-shadow:0 2px 16px rgba(0,0,0,0.03);"></div>
+
+  <div class="progress-section" id="progress-section"></div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" data-filter="both">Both</button>
+    <button class="filter-btn" data-filter="patrick">Patrick</button>
+    <button class="filter-btn" data-filter="becky">Becky</button>
+  </div>
+
+  <div class="timeline" id="timeline"><div class="timeline__line"></div></div>
+
+  <div class="reset-bar">
+    <button class="reset-btn" id="reset-btn">Reset All Progress</button>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<script>
+// ── Firebase config ──
+firebase.initializeApp({
+  apiKey: "AIzaSyA0yjSg7zUJNQ_fbWy5-koXZbFIlElTpo0",
+  authDomain: "bectricktri.firebaseapp.com",
+  databaseURL: "https://bectricktri-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "bectricktri",
+  storageBucket: "bectricktri.firebasestorage.app",
+  messagingSenderId: "116815041908",
+  appId: "1:116815041908:web:274e85fc21e1225a3c4821"
+});
+
+const db = firebase.database();
+const progressRef = db.ref("progress");
+
+// ── ntfy config ──
+const NTFY_TOPIC = "bectricktri";
+const NTFY_URL = "https://ntfy.sh";
+
+// ── Training data ──
+// CURRENT: Patrick: 3:00/100m swim, 19km/h bike, 6:12/km run (predicted: ~2h02)
+// CURRENT: Becky: 3:25/100m swim, 15.75km/h bike, 7:12/km run (predicted: ~2h24)
+// TARGET: Patrick sub-1h30: 2:40/100m swim, 30km/h bike, 5:00/km run
+// TARGET: Becky sub-2h15: 3:10/100m swim, 20km/h bike, 7:00/km run
+// PRIORITY: Bike is #1 for both. Patrick also needs big run gains. Swim is smallest gains needed.
+const WEEKS = [
+  {
+    week:1, dates:"23\u201329 Mar", phase:"Foundation",
+    desc:"Baseline week. Bike is the #1 priority for both of you \u2014 Patrick needs to go from 19 to 30 km/h, Becky from 16 to 20 km/h. Joint ride to set a shared rhythm.",
+    nutrition:"\u2795 ~200\u2013250 kcal/day \u00b7 +25g protein/day",
+    joint:[{day:"Sat",type:"bike",label:"Bike \u2014 long ride together",details:"60 min together at Becky\u2019s pace (~16\u201317 km/h). Practice holding a consistent cadence and drinking on the bike. This is your baseline joint ride."}],
+    patrick:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 tempo intervals",details:"55 min: 10 min warm-up, 5\u00d75 min at 23\u201324 km/h (2 min easy between), cool down. Start building towards 30 km/h."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Lower body focus: squats, lunges, calf raises, glute bridges. Core: planks, dead bugs. 40 min."}
+    ],
+    becky:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 steady endurance",details:"50 min at a steady 16\u201317 km/h. Focus on smooth pedalling, gear changes, and comfort. Saddle time is king right now."},
+      {day:"Thu",type:"run",label:"\uD83E\uDDB5 5km run",details:"5km at ~7:00/km (35 min target). Comfortable but purposeful. Flat route."}
+    ]
+  },
+  {
+    week:2, dates:"30 Mar \u2013 5 Apr", phase:"Foundation",
+    desc:"Swim technique week. Your swim paces are decent \u2014 small gains come from technique, not fitness. Bike stays the focus in solo sessions.",
+    nutrition:"\u2795 ~200\u2013250 kcal/day \u00b7 +25g protein/day",
+    joint:[{day:"Sun",type:"swim",label:"Swim \u2014 750m technique focus",details:"750m together at Becky\u2019s pace (~3:25/100m). Focus on catch, pull-through, and bilateral breathing. Drills every 200m."}],
+    patrick:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 hill repeats",details:"55 min: warm-up, then 6\u00d73 min hill efforts (or high resistance) at 25+ km/h effort, 2 min easy spin between. Build power."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Upper body + core: press-ups, rows, shoulder press, Russian twists. 40 min."}
+    ],
+    becky:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 tempo",details:"50 min: 10 min warm-up, 3\u00d76 min at 18 km/h (2 min easy between), cool down. Push above your comfort zone."},
+      {day:"Thu",type:"misc",label:"Misc: your choice!",details:"Yoga, pilates, cross-trainer, climbing, dance class \u2014 anything you enjoy. 30\u201345 min."}
+    ]
+  },
+  {
+    week:3, dates:"6\u201312 Apr", phase:"Foundation",
+    desc:"Last foundation week. Longer swim together, Becky\u2019s first brick. Patrick: hard bike + sustained effort. Building the engine.",
+    nutrition:"\u2795 ~250\u2013300 kcal/day \u00b7 +25g protein/day",
+    joint:[{day:"Sun",type:"swim",label:"Swim \u2014 900m endurance",details:"900m continuous together at ~3:20/100m. Slightly faster than week 2. Practice sighting. Longest swim yet!"}],
+    patrick:[
+      {day:"Wed",type:"bike",label:"Bike \u2014 sustained effort",details:"60 min: 15 min warm-up, 30 min at 24\u201325 km/h (race pace building block), 15 min cool down. Hold that effort steady."},
+      {day:"Fri",type:"weights",label:"Physio / Strength",details:"Full body: deadlifts, step-ups, bench press, plank variations. 45 min."}
+    ],
+    becky:[
+      {day:"Wed",type:"bike",label:"\uD83E\uDDF1 Brick: Bike \u2192 Run",details:"35 min bike at 17\u201318 km/h, then straight into 15 min run at easy pace. First taste of the transition \u2014 embrace the jelly legs!"},
+      {day:"Fri",type:"run",label:"\uD83E\uDDB5 5km run",details:"5km aiming for 34\u201335 min (~6:50/km). Slightly faster than week 1. Flat route."}
+    ]
+  },
+  {
+    week:4, dates:"13\u201319 Apr", phase:"Build",
+    desc:"Build phase! Bike volume ramps up. Patrick starts serious speed work. Becky builds bike confidence with longer efforts.",
+    nutrition:"\u2795 ~300\u2013350 kcal/day \u00b7 +30g protein/day",
+    joint:[{day:"Sat",type:"bike",label:"Long bike ride",details:"65 min together at 17\u201318 km/h. Include some hills. Practice race nutrition (water + gel/banana). Building Becky\u2019s bike confidence."}],
+    patrick:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 speed intervals",details:"60 min: warm-up, 6\u00d74 min at 27\u201328 km/h (90s easy between), cool down. Start touching race-pace speeds."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Power focus: box jumps, kettlebell swings, single-leg squats. 40 min."}
+    ],
+    becky:[
+      {day:"Tue",type:"swim",label:"Swim \u2014 pace work",details:"4\u00d7200m at 3:15/100m (slightly faster than current). 30s rest. Total ~1000m with warm-up/down."},
+      {day:"Thu",type:"misc",label:"Misc: your choice!",details:"Pilates, yoga, climbing, elliptical \u2014 pick something fun. 30\u201345 min."}
+    ]
+  },
+  {
+    week:5, dates:"20\u201326 Apr", phase:"Build",
+    desc:"Joint brick! Both feel the bike-to-run together. Patrick adds a hard tempo run. Becky pushes bike pace.",
+    nutrition:"\u2795 ~300\u2013350 kcal/day \u00b7 +30g protein/day",
+    joint:[{day:"Sat",type:"bike",label:"\uD83E\uDDF1 Brick: Bike \u2192 Run",details:"40 min bike together at 17\u201318 km/h, then immediately 15 min run together. Same pace, same suffering, same team."}],
+    patrick:[
+      {day:"Mon",type:"run",label:"Tempo run",details:"35 min: 10 min easy, 20 min at 5:30/km (faster than your current 6:12), 5 min cool down. Start closing that gap."},
+      {day:"Wed",type:"weights",label:"Physio / Strength",details:"Lower body + plyometrics: jump squats, Bulgarian split squats, hip flexor work. 45 min."}
+    ],
+    becky:[
+      {day:"Wed",type:"bike",label:"Bike \u2014 hard intervals",details:"55 min: warm-up, 6\u00d74 min at 19\u201320 km/h (90s easy spin between), cool down. Push into your target race pace."},
+      {day:"Fri",type:"run",label:"\uD83E\uDDB5 5km run \u2014 push it",details:"5km aiming for 34 min (~6:48/km). Slightly faster again. You\u2019re building."}
+    ]
+  },
+  {
+    week:6, dates:"27 Apr \u2013 3 May", phase:"Build",
+    desc:"Swim speed together, then tough solo bike work. Becky\u2019s second solo brick. Patrick grinds the bike pace up.",
+    nutrition:"\u2795 ~300\u2013350 kcal/day \u00b7 +30g protein/day",
+    joint:[{day:"Sun",type:"swim",label:"Swim \u2014 intervals",details:"8\u00d7100m together with 20s rest. Aim for ~3:10/100m (faster than your 750m pace). Then 200m easy cool down."}],
+    patrick:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 race pace blocks",details:"65 min: warm-up, 2\u00d712 min at 28\u201329 km/h (3 min easy between), cool down. Longer sustained efforts near race pace."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Core & stability: TRX rows, pallof press, single-leg deadlift. 40 min."}
+    ],
+    becky:[
+      {day:"Tue",type:"bike",label:"\uD83E\uDDF1 Brick: Bike \u2192 Run",details:"40 min bike at 18\u201319 km/h, then 20 min run. Push the run \u2014 you\u2019re getting used to this now."},
+      {day:"Thu",type:"misc",label:"Misc: active recovery",details:"Yoga, foam rolling, gentle swim, or a walk. You\u2019ve earned it. 30 min."}
+    ]
+  },
+  {
+    week:7, dates:"4\u201310 May", phase:"Build",
+    desc:"Last build week. Big ride together. Patrick: bike threshold work. Becky: swim distance + PB run attempt.",
+    nutrition:"\u2795 ~350\u2013400 kcal/day \u00b7 +35g protein/day",
+    joint:[{day:"Sun",type:"bike",label:"Long bike ride",details:"70 min together at 18 km/h. Include 20 min at moderate-hard effort. Last big joint ride \u2014 make it count!"}],
+    patrick:[
+      {day:"Tue",type:"bike",label:"Bike \u2014 threshold",details:"65 min: warm-up, 3\u00d710 min at 28\u201330 km/h (2 min easy between), cool down. This is where the race pace lives."},
+      {day:"Fri",type:"weights",label:"Physio / Strength",details:"Full body power: clean & press, weighted lunges, pull-ups. 45 min."}
+    ],
+    becky:[
+      {day:"Wed",type:"swim",label:"Swim \u2014 distance + speed",details:"1000m: 200m warm-up, 6\u00d7100m at 3:10/100m (15s rest), 200m cool down."},
+      {day:"Fri",type:"run",label:"\uD83E\uDDB5 5km \u2014 PB attempt",details:"5km all-out. Aim for sub-34 min. Proper warm-up, then go for it."}
+    ]
+  },
+  {
+    week:8, dates:"11\u201317 May", phase:"Peak",
+    desc:"Peak phase! Race-pace everything. Patrick: full 20km bike race sim. Becky: biggest brick yet at target race pace.",
+    nutrition:"\u2795 ~350\u2013400 kcal/day \u00b7 +35g protein/day",
+    joint:[{day:"Tue",type:"swim",label:"Race pace swim",details:"750m together. Aim for ~3:00/100m \u2014 faster than your current pace. This is race simulation. Then 200m easy cool down."}],
+    patrick:[
+      {day:"Sat",type:"bike",label:"Bike \u2014 20km race sim",details:"Race simulation: 20km at target race pace (30 km/h = ~40 min). Full effort. Practice nutrition. THIS is the session."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Maintenance: lighter weights, higher reps. Injury prevention. 35 min."}
+    ],
+    becky:[
+      {day:"Sat",type:"bike",label:"\uD83E\uDDF1 Brick: Bike \u2192 Run",details:"45 min bike at 19\u201320 km/h (target race pace!) + 20 min run. Your biggest brick \u2014 simulate race day!"},
+      {day:"Thu",type:"misc",label:"Misc: active recovery",details:"Yoga, pilates, easy swim, foam rolling. Keep it gentle after that brick. 30 min."}
+    ]
+  },
+  {
+    week:9, dates:"18\u201324 May", phase:"Peak",
+    desc:"Open water swim together! Patrick: 5K time trial to check run progress. Becky: full bike race sim at target pace.",
+    nutrition:"\u2795 ~350\u2013400 kcal/day \u00b7 +35g protein/day",
+    joint:[{day:"Sun",type:"swim",label:"Open water swim",details:"750m+ open water together. Aim for ~3:00/100m. Practice sighting, drafting, wetsuit. If no OW, pool race sim."}],
+    patrick:[
+      {day:"Mon",type:"run",label:"5K time trial",details:"Full 5K race effort. Target: sub-28 min (5:35/km). Check progress from your 31 min baseline. Warm up well."},
+      {day:"Wed",type:"weights",label:"Physio / Strength",details:"Functional: Bulgarian split squats, band work, foam rolling. 35 min."}
+    ],
+    becky:[
+      {day:"Wed",type:"bike",label:"Bike \u2014 race sim",details:"60 min at target race pace (20 km/h). Full race-distance effort on the bike. Nail your nutrition and pacing."},
+      {day:"Fri",type:"run",label:"\uD83E\uDDB5 5km \u2014 negative splits",details:"5km: first half at 7:10/km, second half at 6:50/km. Practise racing smart."}
+    ]
+  },
+  {
+    week:10, dates:"25\u201331 May", phase:"Peak",
+    desc:"Joint brick \u2014 full race rehearsal together. Patrick does solo tri sim. Becky builds swim speed.",
+    nutrition:"\u2795 ~300\u2013350 kcal/day \u00b7 +35g protein/day",
+    joint:[{day:"Sat",type:"bike",label:"\uD83E\uDDF1 Brick: Bike \u2192 Run",details:"45 min bike + 15 min run together at Becky\u2019s race pace (~19\u201320 km/h). Practise T2 transition \u2014 set up gear and rehearse it."}],
+    patrick:[
+      {day:"Tue",type:"bike",label:"\uD83E\uDDF1 Brick: Swim \u2192 Bike \u2192 Run",details:"Swim 750m \u2192 Bike 40 min at 29\u201330 km/h \u2192 Run 15 min at 5:15/km. Full race sim! Practise both transitions."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Light: mobility, foam rolling, activation exercises. 30 min."}
+    ],
+    becky:[
+      {day:"Tue",type:"swim",label:"Swim \u2014 speed work",details:"750m at ~3:10/100m + 6\u00d750m fast with 15s rest. Build that top-end speed."},
+      {day:"Thu",type:"misc",label:"Misc: your choice!",details:"Cross-trainer, yoga, climbing, pilates \u2014 whatever you fancy. 30 min."}
+    ]
+  },
+  {
+    week:11, dates:"1\u20137 Jun", phase:"Peak",
+    desc:"Last peak week. Longest swim together. Becky\u2019s last big brick. Patrick: final hard bike session. Push hard \u2014 then we ease off.",
+    nutrition:"\u2795 ~350\u2013400 kcal/day \u00b7 +35g protein/day",
+    joint:[{day:"Wed",type:"swim",label:"Swim \u2014 1000m endurance",details:"1000m continuous together at ~3:00/100m. Longest swim of the plan. Steady, strong, controlled."}],
+    patrick:[
+      {day:"Sun",type:"bike",label:"Bike \u2014 final hard session",details:"70 min with 35 min at 29\u201330 km/h. Last big bike. Leave it all on the road."},
+      {day:"Fri",type:"weights",label:"Physio / Strength",details:"Maintenance: light full body, hip/knee stability. 30 min."}
+    ],
+    becky:[
+      {day:"Sun",type:"bike",label:"\uD83E\uDDF1 Brick: Bike \u2192 Run",details:"45 min bike at 20 km/h + 20 min run. Last big brick. You know exactly what race day feels like now."},
+      {day:"Fri",type:"run",label:"\uD83E\uDDB5 5km \u2014 fast and confident",details:"5km at your best pace. Aim for sub-34 min. Last hard run before sharpening."}
+    ]
+  },
+  {
+    week:12, dates:"8\u201314 Jun", phase:"Sharpen",
+    desc:"Volume drops, intensity stays. Race-pace rehearsals. You\u2019re not getting fitter now \u2014 you\u2019re getting sharper.",
+    nutrition:"\u2795 ~250\u2013300 kcal/day \u00b7 +30g protein/day",
+    joint:[{day:"Tue",type:"swim",label:"Race rehearsal swim",details:"750m time trial together. Target ~3:00/100m. Note your time! Then 200m easy cool down."}],
+    patrick:[
+      {day:"Sat",type:"bike",label:"Bike \u2014 sharp intervals",details:"50 min: 6\u00d73 min at 30+ km/h / 2 min easy. Sharp, fast efforts. Race pace or faster."},
+      {day:"Thu",type:"weights",label:"Physio / Strength",details:"Very light: band work, mobility, stretching. 25 min."}
+    ],
+    becky:[
+      {day:"Sat",type:"bike",label:"Bike \u2014 race pace",details:"55 min at target race pace (~20 km/h). This is the effort you\u2019ll hold on race day. Mentally rehearse the course."},
+      {day:"Thu",type:"misc",label:"Misc: gentle movement",details:"Easy yoga, foam rolling, walk. 25 min."}
+    ]
+  },
+  {
+    week:13, dates:"15\u201321 Jun", phase:"Sharpen",
+    desc:"Race dress rehearsal together! Patrick: run at target pace. Becky: 5km race pace. Everything sharp and dialled.",
+    nutrition:"\u2795 ~250\u2013300 kcal/day \u00b7 +30g protein/day",
+    joint:[{day:"Sun",type:"bike",label:"\uD83E\uDDF1 Brick: Race dress rehearsal",details:"30 min bike + 15 min run together. Both at race effort. Transitions sharp. Wear your race kit!"}],
+    patrick:[
+      {day:"Mon",type:"run",label:"Run \u2014 race pace check",details:"5km at target 5:00/km pace (25 min). See how close you are. This is your run dress rehearsal."},
+      {day:"Wed",type:"weights",label:"Physio / Strength",details:"Activation: glute bridges, band walks, light core. 20 min."}
+    ],
+    becky:[
+      {day:"Wed",type:"swim",label:"Swim \u2014 speed & confidence",details:"6\u00d7100m at 3:10/100m with 20s rest. Fast and sharp."},
+      {day:"Fri",type:"run",label:"\uD83E\uDDB5 5km \u2014 race pace!",details:"5km at target 7:00/km (35 min). This is the dress rehearsal. Controlled and strong."}
+    ]
+  },
+  {
+    week:14, dates:"22\u201328 Jun", phase:"Sharpen",
+    desc:"Last sharp week. Easy spin together. Patrick\u2019s final weights. You\u2019re dialled in and ready.",
+    nutrition:"\u2795 ~200\u2013250 kcal/day \u00b7 +25g protein/day",
+    joint:[{day:"Sat",type:"bike",label:"Easy spin together",details:"30 min very easy together. Chat about race day logistics. Enjoy the ride. You\u2019ve earned this."}],
+    patrick:[
+      {day:"Tue",type:"swim",label:"Swim sharpener",details:"500m at 2:40/100m + 6\u00d750m fast. Sharp and confident."},
+      {day:"Thu",type:"weights",label:"Physio / Strength (last one!)",details:"Gentle mobility, foam rolling, light activation. 20 min."}
+    ],
+    becky:[
+      {day:"Tue",type:"swim",label:"Swim sharpener",details:"500m at 3:10/100m. Smooth, fast, confident."},
+      {day:"Thu",type:"misc",label:"Misc: gentle movement",details:"Easy yoga, stretching, foam rolling. 20 min."}
+    ]
+  },
+  {
+    week:15, dates:"29 Jun \u2013 5 Jul", phase:"Taper",
+    desc:"Taper begins. Volume drops hard. You might feel restless or sluggish \u2014 both normal. Trust the process!",
+    nutrition:"\u2795 ~150\u2013200 kcal/day \u00b7 +20g protein/day",
+    joint:[{day:"Tue",type:"swim",label:"Light swim together",details:"400m easy together with drills. Stay loose. Enjoy it."}],
+    patrick:[{day:"Sat",type:"bike",label:"Easy spin + strides",details:"25 min easy spin, then 4\u00d720s out-of-saddle accelerations. Keep the legs sharp."}],
+    becky:[{day:"Sat",type:"bike",label:"Easy spin",details:"20 min very easy. Legs ticking over. Trust the fitness you\u2019ve built."}]
+  },
+  {
+    week:16, dates:"6\u201312 Jul", phase:"Taper",
+    desc:"Keep it light. Not losing fitness \u2014 gaining freshness. Sleep well, eat well, hydrate.",
+    nutrition:"\u2795 ~100\u2013150 kcal/day \u00b7 +20g protein/day",
+    joint:[{day:"Wed",type:"swim",label:"Gentle swim together",details:"300m easy together. A few race-pace 50s. Trust your training."}],
+    patrick:[{day:"Sat",type:"bike",label:"Easy 20 min spin",details:"Very easy. Open up the legs."}],
+    becky:[{day:"Sat",type:"bike",label:"Easy 15 min spin",details:"Gentle spin. You\u2019ve done the work!"}]
+  },
+  {
+    week:17, dates:"13\u201319 Jul", phase:"Taper",
+    desc:"Final training week. One last swim together, then rest. Visualise race day. You are ready.",
+    nutrition:"Normal diet. Stay hydrated. Carb-load Thu\u2013Sat of race week.",
+    joint:[{day:"Tue",type:"swim",label:"Final swim together",details:"200m easy together + 2\u00d750m at race pace. That\u2019s it. You\u2019re ready. \uD83D\uDCAA"}],
+    patrick:[],
+    becky:[]
+  },
+  {
+    week:18, dates:"20\u201325 Jul", phase:"Race Week",
+    desc:"This is it. Rest Mon\u2013Thu. Carb-load Wed\u2013Thu. Prepare kit. Rack bikes Friday morning. RACE DAY.",
+    nutrition:"\uD83C\uDF5D Carb-load: +300\u2013500 kcal from carbs Wed\u2013Thu. Familiar breakfast 2\u20133hrs before start.",
+    joint:[{day:"Fri 25",type:"race",label:"\uD83C\uDFC1 RACE DAY!",details:"750m swim \u2192 20km bike \u2192 5km run. Patrick: sub-1h30. Becky: sub-2h15. GO SMASH IT! \uD83C\uDFC6"}],
+    patrick:[],
+    becky:[]
+  }
+];
+
+const ICONS = {swim:"\uD83C\uDFCA",bike:"\uD83D\uDEB4",run:"\uD83C\uDFC3",weights:"\uD83C\uDFCB\uFE0F",misc:"\uD83E\uDDD8",race:"\uD83C\uDFC6"};
+const PHASE_CSS = {Foundation:"foundation",Build:"build",Peak:"peak",Sharpen:"sharpen",Taper:"taper","Race Week":"race"};
+
+// ── State ──
+let filter = "both";
+let expanded = new Set();
+let checked = {};
+let currentUser = localStorage.getItem("tri-user") || null;
+let isLive = false;
+let suppressNotify = true; // Don't notify on initial load
+
+// ── User selection ──
+function setUser(user) {
+  currentUser = user;
+  localStorage.setItem("tri-user", user);
+  updateWhoBar();
+  showToast("Welcome, " + (user === "patrick" ? "Patrick" : "Becky") + "! \uD83C\uDFC3");
+}
+
+function updateWhoBar() {
+  document.getElementById("who-patrick").className = "who-btn" + (currentUser === "patrick" ? " active--patrick" : "");
+  document.getElementById("who-becky").className = "who-btn" + (currentUser === "becky" ? " active--becky" : "");
+}
+
+// ── Toast ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+// ── Firebase sync ──
+progressRef.on("value", (snap) => {
+  const data = snap.val() || {};
+  const oldChecked = { ...checked };
+  checked = data;
+  isLive = true;
+
+  // Check for new completions by the other person (for in-app notification)
+  if (!suppressNotify && currentUser) {
+    for (const k in data) {
+      if (!oldChecked[k] && data[k] && data[k] !== currentUser) {
+        // The other person just completed something
+        const parts = k.split("-");
+        const wi = parseInt(parts[0]);
+        const group = parts[1];
+        const si = parseInt(parts[2]);
+        const w = WEEKS[wi];
+        if (w && w[group] && w[group][si]) {
+          const s = w[group][si];
+          const who = data[k] === "patrick" ? "Patrick" : "Becky";
+          const toastHypes = data[k] === "becky" ? BECKY_HYPES : PATRICK_HYPES;
+          const toastHype = toastHypes[Math.floor(Math.random() * toastHypes.length)];
+          showToast(toastHype);
+        }
       }
     }
+  }
+  suppressNotify = false;
+  render();
+});
 
-    function giveUp() {
-      gameOver = true;
-      won = false;
-      saveGameState();
-      fullRender();
+function toggleSession(sessionKey, sessionLabel, sessionType) {
+  if (!currentUser) {
+    showToast("Pick who you are first! \u261D");
+    return;
+  }
+  const wasChecked = !!checked[sessionKey];
+  if (wasChecked) {
+    progressRef.child(sessionKey).remove();
+  } else {
+    // Store who completed it
+    progressRef.child(sessionKey).set(currentUser);
+    // Send push notification via ntfy
+    sendNotification(sessionLabel, sessionType);
+  }
+}
+
+// ── ntfy notifications ──
+// ── Fun notification messages ──
+const BECKY_HYPES = [
+  "Getting snatched! \uD83D\uDCAA",
+  "Booty getting juicy! \uD83C\uDF51",
+  "Butt got better! \uD83C\uDF51\u2728",
+  "Legs said THANK YOU! \uD83E\uDDB5",
+  "Slay completed! \uD83D\uDC85",
+  "She's giving athlete! \uD83C\uDFC6",
+  "Main character energy! \u2728",
+  "Cardio queen strikes again! \uD83D\uDC51",
+  "Out here looking toned! \uD83D\uDD25",
+  "Becky don't miss! \uD83C\uDFAF",
+  "Another one in the bank! \uD83D\uDCB0",
+  "Body is bodying! \uD83D\uDCAB",
+  "Gains loading... complete! \u2705",
+  "Glow up in progress! \u2728",
+  "Serving fitness realness! \uD83D\uDE0D",
+  "Crushed it like a grape! \uD83C\uDF47",
+  "The streets are saying: snatched! \uD83D\uDDE3\uFE0F",
+  "Peach status: upgraded! \uD83C\uDF51\u2B06\uFE0F",
+  "She said yes to the reps! \uD83D\uDCAA",
+  "Triathlon who? Tri-slay-thlon! \uD83D\uDE0E",
+  "Sweat is just fat crying! \uD83D\uDE2D\uD83D\uDCAA",
+  "Legend behaviour! \uD83E\uDDB8\u200D\u2640\uFE0F",
+  "Not her getting fitter AGAIN! \uD83D\uDE31",
+  "She's built different! \uD83D\uDCAF",
+  "Glutes: activated! \uD83C\uDF51\u26A1",
+  "Absolutely slaying! \u2694\uFE0F",
+  "Fitness level: scary! \uD83D\uDC7B",
+  "Beast mode Becky! \uD83D\uDC3B",
+  "That workout didn't stand a chance! \uD83D\uDCA5",
+  "Chef's kiss performance! \uD83D\uDC68\u200D\uD83C\uDF73\uD83D\uDC8B"
+];
+
+const PATRICK_HYPES = [
+  "Absolute machine! \u2699\uFE0F",
+  "He's in his training arc! \u26A1",
+  "Patrick chose violence (on that bike)! \uD83D\uDEB4\uD83D\uDCA8",
+  "Big dog energy! \uD83D\uDC15",
+  "Gains central! \uD83D\uDE82",
+  "Built like a triathlete now! \uD83C\uDFCA\uD83D\uDEB4\uD83C\uDFC3",
+  "Faster. Stronger. Sweatier! \uD83D\uDCAA",
+  "That session feared HIM! \uD83D\uDE28",
+  "Triathlon? Try-HARD-thlon! \uD83D\uDE24",
+  "King of cardio! \uD83D\uDC51",
+  "He's not stopping! \uD83D\uDEAB\uD83D\uDED1",
+  "Speed demon unlocked! \uD83D\uDC7F\uD83D\uDCA8",
+  "The bike is scared of him now! \uD83D\uDEB2\uD83D\uDE31",
+  "Weapon! \u2694\uFE0F",
+  "Look at this fitness goblin go! \uD83E\uDDCC",
+  "PR loading... \u23F3",
+  "Sub-90 is shaking! \uD83E\uDEE8",
+  "Certified sweat lord! \uD83D\uDCA6",
+  "Going absolutely feral on that training! \uD83D\uDE40",
+  "He's locked in! \uD83D\uDD12",
+  "Aerobic capacity: expanding! \uD83C\uDF21\uFE0F",
+  "Crushed that like it owed him money! \uD83D\uDCB8",
+  "Iron legs in the making! \uD83E\uDDBE",
+  "That's my triathlete! \uD83E\uDD79",
+  "Grinding! \uD83E\uDEA8",
+  "Patrick.exe is performing well! \uD83D\uDCBB",
+  "He's cooking! \uD83D\uDC68\u200D\uD83C\uDF73\uD83D\uDD25",
+  "Absolutely terrorising that workout! \uD83D\uDCA5",
+  "Levels! \uD83D\uDCC8",
+  "That session got absolutely bodied! \uD83D\uDC80"
+];
+
+function sendNotification(label, type) {
+  if (!currentUser) return;
+  const isBecky = currentUser === "becky";
+  const who = isBecky ? "Becky" : "Patrick";
+  const hypes = isBecky ? BECKY_HYPES : PATRICK_HYPES;
+  const hype = hypes[Math.floor(Math.random() * hypes.length)];
+
+  fetch(NTFY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      topic: NTFY_TOPIC,
+      title: hype,
+      message: who + " completed: " + label,
+      tags: [isBecky ? "peach" : (type || "white_check_mark")]
+    })
+  })
+  .then(r => { if (!r.ok) console.error("ntfy error:", r.status, r.statusText); })
+  .catch(err => console.error("ntfy fetch failed:", err));
+}
+
+
+// ── Rendering ──
+function sk(w, g, s) { return w + "-" + g + "-" + s; }
+
+function counts() {
+  let p=0,pd=0,b=0,bd=0,j=0,jd=0;
+  WEEKS.forEach((w,i) => {
+    w.joint.forEach((_,s) => { j++; if(checked[sk(i,"joint",s)]) jd++; });
+    w.patrick.forEach((_,s) => { p++; if(checked[sk(i,"patrick",s)]) pd++; });
+    w.becky.forEach((_,s) => { b++; if(checked[sk(i,"becky",s)]) bd++; });
+  });
+  return {p,pd,b,bd,j,jd};
+}
+
+function renderProgress() {
+  const c = counts(), total = c.p+c.b+c.j, done = c.pd+c.bd+c.jd, pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById("progress-section").innerHTML = `
+    <div class="progress-header"><div class="progress-header__title">Training Progress</div><div class="progress-header__pct">${pct}%</div></div>
+    <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-people">
+      <div class="progress-person progress-person--joint"><strong>Joint:</strong> ${c.jd}/${c.j}</div>
+      <div class="progress-person progress-person--patrick"><strong>Patrick:</strong> ${c.pd}/${c.p}</div>
+      <div class="progress-person progress-person--becky"><strong>Becky:</strong> ${c.bd}/${c.b}</div>
+    </div>
+    </div>`;
+}
+
+function sesHTML(wi, g, s, si) {
+  const k = sk(wi,g,si), done = !!checked[k], isJ = g === "joint";
+  const whoCompleted = done ? checked[k] : null;
+  const completedBy = whoCompleted && isJ ? ` (${whoCompleted === "patrick" ? "Patrick" : "Becky"})` : "";
+  return `<div class="session session--${s.type} ${done?"completed":""}">
+    <div class="session__check ${done?"checked":""}" data-key="${k}" data-label="${s.label.replace(/"/g,"&quot;")}" data-type="${s.type}"></div>
+    <div class="session__content">
+      <div class="session__top">
+        <span class="session__icon">${ICONS[s.type]||""}</span>
+        <span class="session__day">${s.day}</span>
+        <span class="session__label">${s.label}</span>
+        ${isJ ? '<span class="session__joint-badge">\uD83E\uDD1D Together</span>' : ""}
+      </div>
+      <div class="session__details">${s.details}${completedBy ? "<br><em style='font-size:12px;color:var(--joint)'>Completed by " + completedBy + "</em>" : ""}</div>
+    </div></div>`;
+}
+
+function weekDone(wi) {
+  const w = WEEKS[wi], gs = filter === "both" ? ["joint","patrick","becky"] : ["joint", filter];
+  let any = false;
+  for (const g of gs) { for (let s=0; s<w[g].length; s++) { any=true; if (!checked[sk(wi,g,s)]) return false; } }
+  return any;
+}
+
+function renderTimeline() {
+  const el = document.getElementById("timeline");
+  let h = '<div class="timeline__line"></div>';
+  WEEKS.forEach((w,i) => {
+    const race = w.phase === "Race Week", exp = expanded.has(i), ph = PHASE_CSS[w.phase] || "foundation", done = weekDone(i);
+    const jS = w.joint, pS = filter !== "becky" ? w.patrick : [], bS = filter !== "patrick" ? w.becky : [];
+    let prev = "";
+    if (!exp) {
+      prev = '<div class="week__preview">';
+      jS.forEach(s => { prev += `<span class="preview-pip">${ICONS[s.type]}<span class="preview-pip__tag preview-pip__tag--j">\uD83E\uDD1D</span></span>`; });
+      pS.forEach(s => { prev += `<span class="preview-pip">${ICONS[s.type]}${filter==="both"?'<span class="preview-pip__tag preview-pip__tag--p">P</span>':""}</span>`; });
+      bS.forEach(s => { prev += `<span class="preview-pip">${ICONS[s.type]}${filter==="both"?'<span class="preview-pip__tag preview-pip__tag--b">B</span>':""}</span>`; });
+      prev += "</div>";
     }
-
-    function newGame() {
-      secret = generateDailySecret(todayKey);
-      guesses = [];
-      gameOver = false;
-      won = false;
-      submitting = false;
-
-      var fg = generateDailyFreeGuess(todayKey);
-      freeGuess = { guess: fg, result: evaluate(secret, fg) };
-
-      debugLog('New game. Secret: ' + JSON.stringify(secret));
-
-      fullRender();
-      setTimeout(function() {
-        var inputs = getDigitInputs();
-        if (inputs.length > 0) inputs[0].focus();
-      }, 50);
+    let body = "";
+    if (exp) {
+      body = '<div class="week__body">';
+      body += `<div class="week__desc"><div class="week__desc-text">${w.desc}<span class="nutri">\uD83C\uDF7D ${w.nutrition}</span></div></div>`;
+      if (jS.length) { body += '<div class="person-label person-label--joint">Joint Sessions</div>'; jS.forEach((s,si) => { body += sesHTML(i,"joint",s,si); }); }
+      if (filter !== "becky" && pS.length) { body += '<div class="person-label person-label--patrick">Patrick Solo</div>'; pS.forEach((s,si) => { body += sesHTML(i,"patrick",s,si); }); }
+      if (filter !== "patrick" && bS.length) { body += '<div class="person-label person-label--becky">Becky Solo</div>'; bS.forEach((s,si) => { body += sesHTML(i,"becky",s,si); }); }
+      body += "</div>";
     }
+    h += `<div class="week ${race?"week--race":""}" style="animation-delay:${Math.min(i*0.03,0.5)}s">
+      <div class="week__dot dot--${ph}"></div>
+      <div class="week__card ${exp?"expanded":""}" data-week="${i}">
+        <div class="week__header">
+          <span class="week__phase phase--${ph}">${w.phase}</span>
+          <span class="week__number">${race?"\uD83C\uDFC6 Race Week!":"Week "+w.week}</span>
+          ${done&&!race?'<span class="week__complete-badge">\u2713 Done</span>':""}
+          <span class="week__dates">${w.dates}</span>
+          <span class="week__chevron">\u25BC</span>
+        </div>${prev}${body}
+      </div></div>`;
+  });
+  el.innerHTML = h;
+}
 
-    // =====================================================
-    // INIT
-    // =====================================================
-    initAuth().then(function() {
-      return loadGameState();
-    }).then(function(savedData) {
-      if (savedData && savedData.date === todayKey && savedData.guesses && savedData.guesses.length > 0) {
-        debugLog('Restoring saved game');
-        restoreGame(savedData);
-      } else {
-        debugLog('Starting fresh game');
-        newGame();
-      }
-    }).catch(function(err) {
-      debugLog('Init error: ' + err.message);
-      newGame();
-    });
-  </script>
+function render() { renderPaceGauges(); renderProgress(); renderTimeline(); }
+
+// ── Pace gauges (arc style) ──
+function renderPaceGauges() {
+  const P_START = 122.5, P_TARGET = 89, B_START = 143.6, B_TARGET = 125;
+  const planStart = new Date(2026, 2, 23);
+  const planEnd = new Date(2026, 6, 25);
+  const now = new Date();
+  const timeProgress = Math.max(0, Math.min(1, (now - planStart) / (planEnd - planStart)));
+  const c = counts();
+  const totalS = c.p + c.b + c.j, doneS = c.pd + c.bd + c.jd;
+  const sessionProgress = totalS > 0 ? doneS / totalS : 0;
+  const progress = Math.min(1, timeProgress * 0.4 + sessionProgress * 0.6);
+
+  const pNow = P_START - (P_START - P_TARGET) * progress;
+  const bNow = B_START - (B_START - B_TARGET) * progress;
+
+  const weeksIn = Math.max(1, Math.min(18, Math.ceil((now - planStart) / (7*24*60*60*1000))));
+
+  function fmtTime(m) {
+    const h = Math.floor(m/60), mn = Math.round(m%60);
+    return h > 0 ? h+"h"+(mn<10?"0":"")+mn : mn+"m";
+  }
+
+  function gauge(name, color, start, target, est, goalLabel) {
+    const pct = Math.max(0, Math.min(1, (start - est) / (start - target)));
+    const cx=90, cy=82, r=68;
+    // Arc from ~150deg to ~30deg (bottom open)
+    const SA = Math.PI * 0.83, EA = Math.PI * 0.17;
+    const totalArc = 2*Math.PI - (SA - EA);
+    const pol = (a) => ({x: cx + r*Math.cos(a), y: cy + r*Math.sin(a)});
+    const as = pol(SA), ae = pol(EA);
+    const pa = SA - pct * totalArc;
+    const pe = pol(pa);
+    const la = pct * totalArc > Math.PI ? 1 : 0;
+    return `
+      <div style="text-align:center;flex:1;min-width:155px;">
+        <div style="font-family:var(--ui-font);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:${color};margin-bottom:2px;">${name}</div>
+        <svg viewBox="0 0 180 115" style="width:100%;max-width:210px;">
+          <path d="M ${as.x} ${as.y} A ${r} ${r} 0 1 0 ${ae.x} ${ae.y}" fill="none" stroke="#EDEBE8" stroke-width="11" stroke-linecap="round"/>
+          ${pct > 0.005 ? `<path d="M ${as.x} ${as.y} A ${r} ${r} 0 ${la} 0 ${pe.x} ${pe.y}" fill="none" stroke="${color}" stroke-width="11" stroke-linecap="round" style="filter:drop-shadow(0 2px 8px ${color}35);"/>` : ""}
+          <circle cx="${pct>0.005?pe.x:as.x}" cy="${pct>0.005?pe.y:as.y}" r="7" fill="${color}" stroke="#fff" stroke-width="3"/>
+          <text x="${cx}" y="${cy-6}" text-anchor="middle" font-family="'Playfair Display',serif" font-size="28" font-weight="800" fill="${color}">${fmtTime(est)}</text>
+          <text x="${cx}" y="${cy+12}" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="9" font-weight="600" fill="#B5A89E" letter-spacing="1.2">EST. RACE TIME</text>
+          <text x="${as.x-6}" y="${as.y+15}" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="8.5" fill="#ccc">${fmtTime(start)}</text>
+          <text x="${ae.x+6}" y="${ae.y+15}" text-anchor="middle" font-family="'DM Sans',sans-serif" font-size="8.5" fill="#ccc">${fmtTime(target)}</text>
+        </svg>
+        <div style="font-family:var(--ui-font);font-size:11px;color:var(--text-light);margin-top:-2px;">Target: <strong style="color:${color}">${goalLabel}</strong></div>
+      </div>`;
+  }
+
+  document.getElementById("pace-gauges").innerHTML = `
+    <div style="font-family:var(--display-font);font-size:18px;font-weight:700;color:var(--text);text-align:center;margin-bottom:8px;">Estimated Race Pace</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+      ${gauge("Patrick","#B94A3E",P_START,P_TARGET,pNow,"sub 1h30")}
+      ${gauge("Becky","#B76E79",B_START,B_TARGET,bNow,"sub 2h15")}
+    </div>
+    <div style="font-family:var(--ui-font);font-size:10px;color:var(--text-light);text-align:center;margin-top:8px;letter-spacing:0.3px;">Week ${weeksIn}/18 \u00b7 Updates with time + sessions completed</div>`;
+}
+
+// ── Events ──
+document.addEventListener("click", e => {
+  const ch = e.target.closest(".session__check");
+  if (ch) {
+    e.stopPropagation();
+    toggleSession(ch.dataset.key, ch.dataset.label, ch.dataset.type);
+    return;
+  }
+  const card = e.target.closest(".week__card");
+  if (card && !e.target.closest(".session__check")) {
+    const wi = +card.dataset.week;
+    expanded.has(wi) ? expanded.delete(wi) : expanded.add(wi);
+    render();
+    return;
+  }
+  const fb = e.target.closest(".filter-btn");
+  if (fb) {
+    filter = fb.dataset.filter;
+    document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+    fb.classList.add("active");
+    render();
+  }
+});
+
+document.getElementById("reset-btn").addEventListener("click", () => {
+  if (confirm("Reset ALL progress for BOTH of you? This can\u2019t be undone.")) {
+    progressRef.remove();
+    showToast("Progress reset!");
+  }
+});
+
+// Init
+updateWhoBar();
+render();
+</script>
 </body>
 </html>
