@@ -24,6 +24,17 @@
     .header .sub { color: #64748b; font-size: 13px; margin-top: 4px; }
     .header .legend { display: flex; justify-content: center; gap: 14px; margin-top: 6px; font-size: 12px; color: #94a3b8; }
 
+    .tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .tab {
+      flex: 1; padding: 10px 0; text-align: center; font-size: 13px; font-weight: 700;
+      cursor: pointer; background: #fff; color: #64748b; border: none; transition: all 0.15s;
+    }
+    .tab.active { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; }
+    .tab:not(:last-child) { border-right: 1px solid #e2e8f0; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
     .stats-bar { display: flex; gap: 8px; margin-bottom: 16px; }
     .stat-card {
       flex: 1; padding: 10px 12px; border-radius: 10px;
@@ -67,28 +78,22 @@
       background: #fff; color: #dc2626; font-size: 14px; font-weight: 600; cursor: pointer;
     }
 
-    .btn-new {
-      padding: 11px 20px; border-radius: 10px; border: 1px solid #e2e8f0;
-      background: #fff; color: #64748b; font-size: 15px; font-weight: 600; cursor: pointer;
-    }
+    .btn-new { padding: 11px 20px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fff; color: #64748b; font-size: 15px; font-weight: 600; cursor: pointer; }
 
     .btn-share {
       padding: 11px 20px; border-radius: 10px; border: none;
       background: #25D366; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
       display: inline-flex; align-items: center; gap: 6px;
     }
-    .btn-share:hover { background: #1fb855; }
 
-    .banner {
-      padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; text-align: center;
-    }
+    .banner { padding: 14px 18px; border-radius: 12px; margin-bottom: 14px; text-align: center; }
     .banner.win { background: linear-gradient(135deg, #dcfce7, #d1fae5); border: 1px solid #86efac; }
     .banner.lose { background: linear-gradient(135deg, #fee2e2, #fef2f2); border: 1px solid #fca5a5; }
     .banner .banner-emoji { font-size: 26px; margin-bottom: 2px; }
     .banner.win .banner-text { font-weight: 700; font-size: 16px; color: #166534; }
     .banner.lose .banner-text { font-weight: 700; font-size: 16px; color: #991b1b; }
     .banner .banner-sub { font-size: 13px; color: #166534; margin-top: 4px; }
-    .banner .banner-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; }
+    .banner .banner-actions { display: flex; justify-content: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
 
     .guess-row {
       display: flex; align-items: center; justify-content: space-between;
@@ -101,7 +106,6 @@
     .guess-left { display: flex; align-items: center; gap: 10px; }
     .guess-idx { font-size: 12px; font-weight: 600; width: 28px; font-family: monospace; color: #94a3b8; }
     .guess-row.freebie .guess-idx { color: #818cf8; }
-
     .guess-digits { display: flex; gap: 4px; }
     .guess-digit {
       width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
@@ -110,15 +114,68 @@
     }
     .guess-row.freebie .guess-digit { background: #e0e7ff; }
     .guess-row.winner .guess-digit { background: #bbf7d0; }
-
     .guess-right { display: flex; gap: 6px; }
 
-    .badge {
-      display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px;
-      border-radius: 20px; font-size: 13px; font-weight: 600;
-    }
+    .badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 20px; font-size: 13px; font-weight: 600; }
     .badge.exact { background: #dcfce7; color: #166534; }
     .badge.misplaced { background: #fff7ed; color: #ea580c; }
+
+    /* Name modal */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 100;
+    }
+    .modal {
+      background: #fff; border-radius: 16px; padding: 28px 24px; max-width: 360px; width: 90%; text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+    }
+    .modal h2 { font-size: 20px; font-weight: 800; color: #1e293b; margin-bottom: 6px; }
+    .modal p { font-size: 14px; color: #64748b; margin-bottom: 16px; }
+    .modal input {
+      width: 100%; padding: 12px 16px; border: 2px solid #d1d5db; border-radius: 10px;
+      font-size: 16px; outline: none; margin-bottom: 12px; font-family: inherit;
+    }
+    .modal input:focus { border-color: #6366f1; }
+    .modal button {
+      width: 100%; padding: 12px; border-radius: 10px; border: none;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff;
+      font-size: 15px; font-weight: 700; cursor: pointer;
+    }
+
+    /* Leaderboard */
+    .lb-card {
+      background: #fff; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      border: 1px solid #e2e8f0;
+    }
+    .lb-card.you { border-color: #a5b4fc; background: #eef2ff; }
+    .lb-rank { font-size: 20px; font-weight: 800; color: #94a3b8; width: 36px; font-family: 'JetBrains Mono', monospace; }
+    .lb-card:nth-child(1) .lb-rank { color: #f59e0b; }
+    .lb-card:nth-child(2) .lb-rank { color: #94a3b8; }
+    .lb-card:nth-child(3) .lb-rank { color: #cd7f32; }
+    .lb-name { font-weight: 700; font-size: 15px; color: #1e293b; flex: 1; }
+    .lb-score { font-weight: 800; font-size: 18px; color: #6366f1; font-family: 'JetBrains Mono', monospace; }
+    .lb-detail { font-size: 12px; color: #94a3b8; margin-left: 4px; }
+    .lb-replay {
+      margin-left: 10px; padding: 6px 12px; border-radius: 8px; border: 1px solid #e2e8f0;
+      background: #fff; color: #6366f1; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .lb-replay:hover { background: #eef2ff; }
+    .lb-empty { text-align: center; padding: 30px; color: #94a3b8; font-size: 14px; }
+    .lb-date { text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 12px; font-weight: 600; }
+
+    /* Ghost replay */
+    .replay-header { text-align: center; margin-bottom: 16px; }
+    .replay-header h3 { font-size: 18px; font-weight: 800; color: #1e293b; }
+    .replay-header p { font-size: 13px; color: #64748b; margin-top: 4px; }
+    .replay-controls { display: flex; justify-content: center; gap: 8px; margin-bottom: 16px; }
+    .btn-replay-ctrl {
+      padding: 8px 16px; border-radius: 8px; border: 1px solid #e2e8f0;
+      background: #fff; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer;
+    }
+    .btn-replay-ctrl.primary { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: #fff; border: none; }
+
+    .hidden { display: none; }
 
     @keyframes shake {
       0%, 100% { transform: translateX(0); }
@@ -145,65 +202,170 @@
       </div>
     </div>
 
-    <div class="stats-bar" id="stats-bar"></div>
-
-    <div class="guess-list" id="guess-list"></div>
-
-    <div class="input-area" id="input-area">
-      <div class="digit-row" id="digit-row"></div>
-      <div class="btn-row" id="btn-row"></div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('play')">🎮 Play</button>
+      <button class="tab" onclick="switchTab('leaderboard')">🏆 Leaderboard</button>
     </div>
 
-    <div id="banner-container"></div>
+    <!-- PLAY PANEL -->
+    <div class="panel active" id="panel-play">
+      <div class="stats-bar" id="stats-bar"></div>
+      <div class="guess-list" id="guess-list"></div>
+      <div class="input-area" id="input-area">
+        <div class="digit-row" id="digit-row"></div>
+        <div class="btn-row" id="btn-row"></div>
+      </div>
+      <div id="banner-container"></div>
+    </div>
+
+    <!-- LEADERBOARD PANEL -->
+    <div class="panel" id="panel-leaderboard">
+      <div class="lb-date" id="lb-date"></div>
+      <div id="lb-list"><div class="lb-empty">No scores yet today — be the first!</div></div>
+    </div>
+
+    <!-- REPLAY PANEL -->
+    <div class="panel" id="panel-replay">
+      <div class="replay-header">
+        <h3 id="replay-title">Ghost Replay</h3>
+        <p id="replay-sub"></p>
+      </div>
+      <div class="replay-controls">
+        <button class="btn-replay-ctrl" onclick="replayPrev()">⬅ Prev</button>
+        <button class="btn-replay-ctrl primary" onclick="replayNext()">Next ➡</button>
+        <button class="btn-replay-ctrl" onclick="switchTab('leaderboard')">✕ Close</button>
+      </div>
+      <div class="guess-list" id="replay-guess-list"></div>
+    </div>
   </div>
 
+  <!-- NAME MODAL -->
+  <div class="modal-overlay" id="name-modal" style="display:none;">
+    <div class="modal">
+      <h2>Welcome to Fiftle!</h2>
+      <p>Pick a name for the family leaderboard</p>
+      <input type="text" id="name-input" placeholder="Your name" maxlength="20" autocomplete="off">
+      <button onclick="saveName()">Let's go!</button>
+    </div>
+  </div>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
   <script>
+    // =====================================================
+    // FIREBASE CONFIG — paste your config here
+    // =====================================================
+    firebase.initializeApp({
+      apiKey: "AIzaSyBYI2j_SWzdNUllOJphwbbA9sm9rpZe2wA",
+      authDomain: "fiftle.firebaseapp.com",
+      projectId: "fiftle",
+      storageBucket: "fiftle.firebasestorage.app",
+      messagingSenderId: "754895399211",
+      appId: "1:754895399211:web:f30b6953a2a7a55ccb3d6e"
+    });
+
+    var db = firebase.firestore();
+    var auth = firebase.auth();
+    var currentUid = null;
+    var playerName = null;
+
+    // =====================================================
+    // AUTH + NAME
+    // =====================================================
+    function initAuth() {
+      return auth.signInAnonymously().then(function(result) {
+        currentUid = result.user.uid;
+        playerName = localStorage.getItem('fiftle_player_name');
+        if (!playerName) {
+          document.getElementById('name-modal').style.display = 'flex';
+        }
+      });
+    }
+
+    function saveName() {
+      var name = document.getElementById('name-input').value.trim();
+      if (!name) return;
+      playerName = name;
+      localStorage.setItem('fiftle_player_name', name);
+      document.getElementById('name-modal').style.display = 'none';
+      getDigitInputs()[0].focus();
+    }
+
+    document.getElementById('name-input').addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') saveName();
+    });
+
+    // =====================================================
+    // DAILY CHALLENGE — seeded from date
+    // =====================================================
+    function getTodayKey() {
+      var d = new Date();
+      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    }
+
+    function seededRandom(seed) {
+      // Simple mulberry32 PRNG
+      var t = seed | 0;
+      return function() {
+        t = (t + 0x6D2B79F5) | 0;
+        var x = Math.imul(t ^ (t >>> 15), 1 | t);
+        x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+        return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function dateToSeed(dateStr) {
+      var hash = 0;
+      for (var i = 0; i < dateStr.length; i++) {
+        hash = ((hash << 5) - hash) + dateStr.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return Math.abs(hash);
+    }
+
+    function generateDailySecret(dateStr) {
+      var rng = seededRandom(dateToSeed(dateStr));
+      var digits = [0,1,2,3,4,5,6,7,8,9];
+      // Pick first digit (1-9)
+      var firstIdx = Math.floor(rng() * 9) + 1;
+      var first = digits.splice(firstIdx, 1)[0];
+      var rest = [];
+      for (var i = 0; i < 4; i++) {
+        var idx = Math.floor(rng() * digits.length);
+        rest.push(digits.splice(idx, 1)[0]);
+      }
+      return [first].concat(rest);
+    }
+
+    function generateDailyFreeGuess(dateStr) {
+      // Use a different seed offset for free guess
+      var rng = seededRandom(dateToSeed(dateStr + '_free'));
+      var digits = [0,1,2,3,4,5,6,7,8,9];
+      var firstIdx = Math.floor(rng() * 9) + 1;
+      var first = digits.splice(firstIdx, 1)[0];
+      var rest = [];
+      for (var i = 0; i < 4; i++) {
+        var idx = Math.floor(rng() * digits.length);
+        rest.push(digits.splice(idx, 1)[0]);
+      }
+      return [first].concat(rest);
+    }
+
+    // =====================================================
+    // CORE GAME STATE
+    // =====================================================
     var secret = [];
     var guesses = [];
     var gameOver = false;
     var won = false;
     var completedGames = [];
     var freeGuess = null;
+    var todayKey = getTodayKey();
 
     var SQUIGGLE_SVG = '<svg width="16" height="12" viewBox="0 0 16 12" style="vertical-align: middle; margin-right: 2px;"><path d="M1 6 C3 2, 5 10, 7 6 C9 2, 11 10, 15 6" stroke="#ea580c" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
-
-    function getTodayKey() {
-      var d = new Date();
-      return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    }
-
-    function loadDailyFreeGuess() {
-      try {
-        var stored = localStorage.getItem('fiftle_free_guess');
-        if (stored) {
-          var data = JSON.parse(stored);
-          if (data.date === getTodayKey()) {
-            return { guess: data.guess, used: true };
-          }
-        }
-      } catch(e) {}
-      return { guess: null, used: false };
-    }
-
-    function saveDailyFreeGuess(guessDigits) {
-      try {
-        localStorage.setItem('fiftle_free_guess', JSON.stringify({
-          date: getTodayKey(),
-          guess: guessDigits
-        }));
-      } catch(e) {}
-    }
-
-    function generateNumber() {
-      var digits = [0,1,2,3,4,5,6,7,8,9];
-      var first = digits.splice(Math.floor(Math.random() * 9) + 1, 1)[0];
-      var rest = [];
-      for (var i = 0; i < 4; i++) {
-        var idx = Math.floor(Math.random() * digits.length);
-        rest.push(digits.splice(idx, 1)[0]);
-      }
-      return [first].concat(rest);
-    }
 
     function evaluate(sec, guess) {
       var exact = 0, misplaced = 0;
@@ -214,7 +376,6 @@
       return { exact: exact, misplaced: misplaced };
     }
 
-    // Build per-digit colour map: green if exact, orange if misplaced, grey if wrong
     function evaluatePerDigit(sec, guess) {
       return guess.map(function(d, i) {
         if (d === sec[i]) return 'exact';
@@ -223,46 +384,137 @@
       });
     }
 
-    function buildShareText() {
-      var allGuesses = [];
-      if (freeGuess) allGuesses.push(freeGuess);
-      guesses.forEach(function(g) { allGuesses.push(g); });
-
-      var lines = allGuesses.map(function(g) {
-        var colours = evaluatePerDigit(secret, g.guess);
-        return colours.map(function(c) {
-          if (c === 'exact') return '🟩';
-          if (c === 'misplaced') return '🟧';
-          return '⬜';
-        }).join('');
+    // =====================================================
+    // TABS
+    // =====================================================
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(function(t, i) {
+        t.classList.toggle('active', (tab === 'play' && i === 0) || (tab === 'leaderboard' && i === 1));
       });
-
-      var header = '🔢 Fiftle';
-      if (won) {
-        header += ' — cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!';
-      } else {
-        header += ' — gave up 😔';
-      }
-
-      return header + '\n\n' + lines.join('\n') + '\n\nPlay at fiftle.xyz';
+      document.getElementById('panel-play').classList.toggle('active', tab === 'play');
+      document.getElementById('panel-leaderboard').classList.toggle('active', tab === 'leaderboard');
+      document.getElementById('panel-replay').classList.toggle('active', tab === 'replay');
+      if (tab === 'leaderboard') loadLeaderboard();
     }
 
-    function shareWhatsApp() {
-      var text = buildShareText();
-      var url = 'https://wa.me/?text=' + encodeURIComponent(text);
-      window.open(url, '_blank');
+    // =====================================================
+    // FIREBASE: SAVE SCORE
+    // =====================================================
+    function saveScore() {
+      if (!currentUid || !playerName) return;
+      var docId = todayKey + '_' + currentUid;
+      var allGuessArrays = [];
+      if (freeGuess) allGuessArrays.push(freeGuess.guess);
+      guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
+
+      db.collection('fiftle_scores').doc(docId).set({
+        date: todayKey,
+        playerId: currentUid,
+        playerName: playerName,
+        guessCount: guesses.length,
+        guesses: allGuessArrays,
+        won: won,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
     }
 
-    function copyResult() {
-      var text = buildShareText();
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText(text).then(function() {
-          var btn = document.getElementById('btn-copy');
-          if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 1500); }
+    // =====================================================
+    // FIREBASE: LEADERBOARD
+    // =====================================================
+    function loadLeaderboard() {
+      document.getElementById('lb-date').textContent = 'Daily challenge: ' + todayKey;
+      db.collection('fiftle_scores')
+        .where('date', '==', todayKey)
+        .orderBy('won', 'desc')
+        .orderBy('guessCount', 'asc')
+        .get()
+        .then(function(snapshot) {
+          var list = document.getElementById('lb-list');
+          if (snapshot.empty) {
+            list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
+            return;
+          }
+          var html = '';
+          var rank = 0;
+          snapshot.forEach(function(doc) {
+            rank++;
+            var d = doc.data();
+            var isYou = d.playerId === currentUid;
+            var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
+            html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
+              '<span class="lb-rank">' + rank + '</span>' +
+              '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
+              '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
+              '<span class="lb-detail">' + status + '</span>' +
+              '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
+            '</div>';
+          });
+          list.innerHTML = html;
         });
+    }
+
+    function escHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // =====================================================
+    // GHOST REPLAY
+    // =====================================================
+    var replayData = null;
+    var replayStep = 0;
+
+    function startReplay(docId) {
+      db.collection('fiftle_scores').doc(docId).get().then(function(doc) {
+        if (!doc.exists) return;
+        replayData = doc.data();
+        replayStep = 0;
+        switchTab('replay');
+        document.getElementById('replay-title').textContent = '👻 ' + escHtml(replayData.playerName) + "'s game";
+        var status = replayData.won ? ('Solved in ' + replayData.guessCount + ' guesses') : 'Gave up';
+        document.getElementById('replay-sub').textContent = status + ' — step through their guesses';
+        renderReplay();
+      });
+    }
+
+    function replayNext() {
+      if (!replayData) return;
+      if (replayStep < replayData.guesses.length) {
+        replayStep++;
+        renderReplay();
       }
     }
 
+    function replayPrev() {
+      if (!replayData) return;
+      if (replayStep > 0) {
+        replayStep--;
+        renderReplay();
+      }
+    }
+
+    function renderReplay() {
+      var list = document.getElementById('replay-guess-list');
+      var html = '';
+      var dailySecret = generateDailySecret(replayData.date);
+      for (var i = 0; i < replayStep; i++) {
+        var g = replayData.guesses[i];
+        var result = evaluate(dailySecret, g);
+        var isFree = (i === 0);
+        html += makeGuessRowHTML(g, result, isFree ? 0 : i, isFree);
+      }
+      if (replayStep === 0) {
+        html = '<div class="lb-empty">Press Next ➡ to step through guesses</div>';
+      }
+      list.innerHTML = html;
+      document.getElementById('replay-sub').textContent =
+        'Showing ' + replayStep + ' of ' + replayData.guesses.length + ' guesses';
+    }
+
+    // =====================================================
+    // RENDERING
+    // =====================================================
     function renderStats() {
       var total = completedGames.length;
       var avg = total > 0 ? (completedGames.reduce(function(a,b){ return a+b; }, 0) / total).toFixed(1) : "\u2014";
@@ -307,6 +559,40 @@
         html += '<button class="btn-new" onclick="newGame()">New Game</button>';
       }
       row.innerHTML = html;
+    }
+
+    function buildShareText() {
+      var allGuesses = [];
+      if (freeGuess) allGuesses.push(freeGuess);
+      guesses.forEach(function(g) { allGuesses.push(g); });
+      var lines = allGuesses.map(function(g) {
+        var colours = evaluatePerDigit(secret, g.guess);
+        return colours.map(function(c) {
+          if (c === 'exact') return '🟩';
+          if (c === 'misplaced') return '🟧';
+          return '⬜';
+        }).join('');
+      });
+      var header = '🔢 Fiftle ' + todayKey;
+      if (won) {
+        header += ' — cracked it in ' + guesses.length + ' guess' + (guesses.length > 1 ? 'es' : '') + '!';
+      } else {
+        header += ' — gave up 😔';
+      }
+      return header + '\n\n' + lines.join('\n') + '\n\nPlay at fiftle.xyz';
+    }
+
+    function shareWhatsApp() {
+      window.open('https://wa.me/?text=' + encodeURIComponent(buildShareText()), '_blank');
+    }
+
+    function copyResult() {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(buildShareText()).then(function() {
+          var btn = document.getElementById('btn-copy');
+          if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = '📋 Copy'; }, 1500); }
+        });
+      }
     }
 
     function renderBanner() {
@@ -365,6 +651,9 @@
       renderGuessList();
     }
 
+    // =====================================================
+    // INPUT HANDLERS
+    // =====================================================
     function getDigitInputs() { return document.querySelectorAll(".digit-input"); }
 
     function onDigitInput(e) {
@@ -394,6 +683,9 @@
       setTimeout(function() { area.classList.remove("shake"); }, 500);
     }
 
+    // =====================================================
+    // GAME ACTIONS
+    // =====================================================
     function submitGuess() {
       if (gameOver) return;
       var vals = Array.from(getDigitInputs()).map(function(inp) { return inp.value; });
@@ -408,6 +700,7 @@
         won = true;
         gameOver = true;
         completedGames.push(guesses.length);
+        saveScore();
       }
 
       render();
@@ -417,31 +710,31 @@
     function giveUp() {
       gameOver = true;
       won = false;
+      saveScore();
       render();
     }
 
     function newGame() {
-      secret = generateNumber();
+      // Daily mode: same secret all day, new random for extra games
+      secret = generateDailySecret(todayKey);
       guesses = [];
       gameOver = false;
       won = false;
 
-      var daily = loadDailyFreeGuess();
-      if (daily.used) {
-        freeGuess = { guess: daily.guess, result: evaluate(secret, daily.guess) };
-      } else {
-        var fg = generateNumber();
-        saveDailyFreeGuess(fg);
-        freeGuess = { guess: fg, result: evaluate(secret, fg) };
-      }
+      var fg = generateDailyFreeGuess(todayKey);
+      freeGuess = { guess: fg, result: evaluate(secret, fg) };
 
       renderInputs();
       render();
       setTimeout(function() { getDigitInputs()[0].focus(); }, 50);
     }
 
-    newGame();
+    // =====================================================
+    // INIT
+    // =====================================================
+    initAuth().then(function() {
+      newGame();
+    });
   </script>
 </body>
 </html>
-```
