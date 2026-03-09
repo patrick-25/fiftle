@@ -254,7 +254,7 @@
 
   <script>
     // =====================================================
-    // DEBUG — triple-tap the title to show/hide debug log
+    // DEBUG
     // =====================================================
     var debugEl = document.getElementById('debug-log');
     var tapCount = 0;
@@ -408,6 +408,90 @@
     }
 
     // =====================================================
+    // SAVE / LOAD GAME STATE
+    // =====================================================
+    function getDocId() {
+      return todayKey + '_' + currentUid;
+    }
+
+    function saveGameState() {
+      if (!currentUid || !playerName) {
+        debugLog('saveGameState skipped: no uid or name');
+        return;
+      }
+      try {
+        var allGuessArrays = [];
+        if (freeGuess) allGuessArrays.push(freeGuess.guess);
+        guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
+
+        var data = {
+          date: todayKey,
+          playerId: currentUid,
+          playerName: playerName,
+          guessCount: guesses.length,
+          guesses: allGuessArrays,
+          won: won,
+          gameOver: gameOver,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        };
+
+        db.collection('fiftle_scores').doc(getDocId()).set(data).then(function() {
+          debugLog('Game state saved OK');
+        }).catch(function(err) {
+          debugLog('Save error: ' + err.message);
+        });
+      } catch (err) {
+        debugLog('saveGameState exception: ' + err.message);
+      }
+    }
+
+    function loadGameState() {
+      if (!currentUid) {
+        debugLog('loadGameState skipped: no uid');
+        return Promise.resolve(null);
+      }
+
+      return db.collection('fiftle_scores').doc(getDocId()).get().then(function(doc) {
+        if (!doc.exists) {
+          debugLog('No saved game for today');
+          return null;
+        }
+        var data = doc.data();
+        debugLog('Loaded saved game: won=' + data.won + ' gameOver=' + data.gameOver + ' guesses=' + data.guessCount);
+        return data;
+      }).catch(function(err) {
+        debugLog('Load error: ' + err.message);
+        return null;
+      });
+    }
+
+    function restoreGame(data) {
+      secret = generateDailySecret(todayKey);
+      var fg = generateDailyFreeGuess(todayKey);
+      freeGuess = { guess: fg, result: evaluate(secret, fg) };
+
+      // Rebuild guesses from saved data (skip first entry which is the free guess)
+      guesses = [];
+      var savedGuesses = data.guesses || [];
+      for (var i = 1; i < savedGuesses.length; i++) {
+        var g = savedGuesses[i];
+        var result = evaluate(secret, g);
+        guesses.push({ guess: g, result: result });
+      }
+
+      won = data.won || false;
+      gameOver = data.gameOver || false;
+
+      if (won) {
+        completedGames.push(guesses.length);
+      }
+
+      debugLog('Restored: ' + guesses.length + ' guesses, gameOver=' + gameOver + ' won=' + won);
+
+      fullRender();
+    }
+
+    // =====================================================
     // TABS
     // =====================================================
     function switchTab(tab) {
@@ -421,41 +505,13 @@
     }
 
     // =====================================================
-    // FIREBASE: SAVE + LEADERBOARD
+    // LEADERBOARD
     // =====================================================
-    function saveScore() {
-      if (!currentUid || !playerName) {
-        debugLog('saveScore skipped: no uid or name');
-        return;
-      }
-      try {
-        var docId = todayKey + '_' + currentUid;
-        var allGuessArrays = [];
-        if (freeGuess) allGuessArrays.push(freeGuess.guess);
-        guesses.forEach(function(g) { allGuessArrays.push(g.guess); });
-
-        db.collection('fiftle_scores').doc(docId).set({
-          date: todayKey,
-          playerId: currentUid,
-          playerName: playerName,
-          guessCount: guesses.length,
-          guesses: allGuessArrays,
-          won: won,
-          timestamp: firebase.firestore.FieldValue.serverTimestamp()
-        }).then(function() {
-          debugLog('Score saved OK');
-        }).catch(function(err) {
-          debugLog('Score save error: ' + err.message);
-        });
-      } catch (err) {
-        debugLog('saveScore exception: ' + err.message);
-      }
-    }
-
     function loadLeaderboard() {
       document.getElementById('lb-date').textContent = 'Daily challenge: ' + todayKey;
       db.collection('fiftle_scores')
         .where('date', '==', todayKey)
+        .where('gameOver', '==', true)
         .orderBy('won', 'desc')
         .orderBy('guessCount', 'asc')
         .get()
@@ -483,6 +539,35 @@
           list.innerHTML = html;
         }).catch(function(err) {
           debugLog('Leaderboard error: ' + err.message);
+          // Fallback query without gameOver filter (for older data)
+          db.collection('fiftle_scores')
+            .where('date', '==', todayKey)
+            .orderBy('won', 'desc')
+            .orderBy('guessCount', 'asc')
+            .get()
+            .then(function(snapshot) {
+              var list = document.getElementById('lb-list');
+              if (snapshot.empty) {
+                list.innerHTML = '<div class="lb-empty">No scores yet today — be the first!</div>';
+                return;
+              }
+              var html = '';
+              var rank = 0;
+              snapshot.forEach(function(doc) {
+                rank++;
+                var d = doc.data();
+                var isYou = d.playerId === currentUid;
+                var status = d.won ? (d.guessCount + ' guess' + (d.guessCount > 1 ? 'es' : '')) : 'gave up';
+                html += '<div class="lb-card' + (isYou ? ' you' : '') + '">' +
+                  '<span class="lb-rank">' + rank + '</span>' +
+                  '<span class="lb-name">' + escHtml(d.playerName) + (isYou ? ' (you)' : '') + '</span>' +
+                  '<span class="lb-score">' + (d.won ? d.guessCount : '✕') + '</span>' +
+                  '<span class="lb-detail">' + status + '</span>' +
+                  '<button class="lb-replay" onclick="startReplay(\'' + doc.id + '\')">👻 Replay</button>' +
+                '</div>';
+              });
+              list.innerHTML = html;
+            });
         });
     }
 
@@ -739,8 +824,6 @@
 
       try {
         var inputs = getDigitInputs();
-        debugLog('Found ' + inputs.length + ' inputs');
-
         var vals = [];
         for (var i = 0; i < inputs.length; i++) {
           vals.push(inputs[i].value);
@@ -748,7 +831,6 @@
         debugLog('Input values: ' + JSON.stringify(vals));
 
         if (vals.length !== 5 || vals.some(function(v) { return v === ""; })) {
-          debugLog('Validation fail: empty inputs');
           shakeInput();
           submitting = false;
           return;
@@ -758,7 +840,6 @@
         debugLog('Guess: ' + JSON.stringify(guess) + ' Secret: ' + JSON.stringify(secret));
 
         if (new Set(guess).size !== 5) {
-          debugLog('Validation fail: duplicate digits');
           shakeInput();
           submitting = false;
           return;
@@ -774,8 +855,10 @@
           won = true;
           gameOver = true;
           completedGames.push(guesses.length);
-          saveScore();
         }
+
+        // Save to Firebase after every guess (persists progress)
+        saveGameState();
 
         fullRender();
 
@@ -796,7 +879,7 @@
     function giveUp() {
       gameOver = true;
       won = false;
-      saveScore();
+      saveGameState();
       fullRender();
     }
 
@@ -810,7 +893,7 @@
       var fg = generateDailyFreeGuess(todayKey);
       freeGuess = { guess: fg, result: evaluate(secret, fg) };
 
-      debugLog('New game. Secret: ' + JSON.stringify(secret) + ' Free: ' + JSON.stringify(fg));
+      debugLog('New game. Secret: ' + JSON.stringify(secret));
 
       fullRender();
       setTimeout(function() {
@@ -823,7 +906,15 @@
     // INIT
     // =====================================================
     initAuth().then(function() {
-      newGame();
+      return loadGameState();
+    }).then(function(savedData) {
+      if (savedData && savedData.date === todayKey && savedData.guesses && savedData.guesses.length > 0) {
+        debugLog('Restoring saved game');
+        restoreGame(savedData);
+      } else {
+        debugLog('Starting fresh game');
+        newGame();
+      }
     }).catch(function(err) {
       debugLog('Init error: ' + err.message);
       newGame();
