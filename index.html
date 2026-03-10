@@ -100,20 +100,23 @@
       padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0;
       background: rgba(248,250,252,0.8);
     }
-    .guess-row.freebie { background: rgba(238,242,255,0.7); border: 1px dashed #a5b4fc; }
+    .guess-row.starter { background: rgba(238,242,255,0.7); border: 1px dashed #a5b4fc; }
     .guess-row.winner { background: linear-gradient(135deg, #dcfce7, #d1fae5); border: 1px solid #86efac; }
 
     .guess-left { display: flex; align-items: center; gap: 10px; }
-    .guess-idx { font-size: 12px; font-weight: 600; width: 28px; font-family: monospace; color: #94a3b8; }
-    .guess-row.freebie .guess-idx { color: #818cf8; }
+    .guess-idx { font-size: 12px; font-weight: 600; width: 44px; font-family: monospace; color: #94a3b8; }
+    .guess-row.starter .guess-idx { color: #818cf8; }
     .guess-digits { display: flex; gap: 4px; }
     .guess-digit {
       width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
       border-radius: 7px; font-weight: 700; font-size: 16px;
       font-family: 'JetBrains Mono', monospace; background: #e2e8f0; color: #1e293b;
     }
-    .guess-row.freebie .guess-digit { background: #e0e7ff; }
-    .guess-row.winner .guess-digit { background: #bbf7d0; }
+    .guess-row.starter .guess-digit { background: #e0e7ff; }
+    .guess-digit.d-exact { background: #bbf7d0; }
+    .guess-digit.d-misplaced { background: #fed7aa; }
+    .guess-digit.d-wrong { background: #e2e8f0; }
+    .guess-row.starter .guess-digit.d-wrong { background: #e0e7ff; }
     .guess-right { display: flex; gap: 6px; }
 
     .badge { display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border-radius: 20px; font-size: 13px; font-weight: 600; }
@@ -347,8 +350,8 @@
       return Math.abs(hash);
     }
 
-    function generateDailySecret(dateStr) {
-      var rng = seededRandom(dateToSeed(dateStr));
+    function generateFromSeed(seedStr) {
+      var rng = seededRandom(dateToSeed(seedStr));
       var digits = [0,1,2,3,4,5,6,7,8,9];
       var firstIdx = Math.floor(rng() * 9) + 1;
       var first = digits.splice(firstIdx, 1)[0];
@@ -360,17 +363,12 @@
       return [first].concat(rest);
     }
 
-    function generateDailyFreeGuess(dateStr) {
-      var rng = seededRandom(dateToSeed(dateStr + '_free'));
-      var digits = [0,1,2,3,4,5,6,7,8,9];
-      var firstIdx = Math.floor(rng() * 9) + 1;
-      var first = digits.splice(firstIdx, 1)[0];
-      var rest = [];
-      for (var i = 0; i < 4; i++) {
-        var idx = Math.floor(rng() * digits.length);
-        rest.push(digits.splice(idx, 1)[0]);
-      }
-      return [first].concat(rest);
+    function generateDailySecret(dateStr) {
+      return generateFromSeed(dateStr);
+    }
+
+    function generateStarterGuess(dateStr, uid) {
+      return generateFromSeed(dateStr + '_starter_' + uid);
     }
 
     // =====================================================
@@ -381,7 +379,7 @@
     var gameOver = false;
     var won = false;
     var completedGames = [];
-    var freeGuess = null;
+    var starterGuess = null;
     var todayKey = getTodayKey();
     var submitting = false;
 
@@ -407,9 +405,6 @@
       });
     }
 
-    // =====================================================
-    // HELPER: parse guess from Firestore (string or array)
-    // =====================================================
     function parseGuess(raw) {
       if (typeof raw === 'string') {
         return raw.split(',').map(Number);
@@ -430,10 +425,8 @@
         return;
       }
       try {
-        // Convert each guess array to a comma-separated string
-        // because Firestore does not support nested arrays
         var allGuessStrings = [];
-        if (freeGuess) allGuessStrings.push(freeGuess.guess.join(','));
+        if (starterGuess) allGuessStrings.push(starterGuess.guess.join(','));
         guesses.forEach(function(g) { allGuessStrings.push(g.guess.join(',')); });
 
         var data = {
@@ -479,10 +472,9 @@
 
     function restoreGame(data) {
       secret = generateDailySecret(todayKey);
-      var fg = generateDailyFreeGuess(todayKey);
-      freeGuess = { guess: fg, result: evaluate(secret, fg) };
+      var sg = generateStarterGuess(todayKey, currentUid);
+      starterGuess = { guess: sg, result: evaluate(secret, sg) };
 
-      // Rebuild guesses from saved data (skip first entry which is the free guess)
       guesses = [];
       var savedGuesses = data.guesses || [];
       for (var i = 1; i < savedGuesses.length; i++) {
@@ -522,7 +514,6 @@
     function loadLeaderboard() {
       document.getElementById('lb-date').textContent = 'Daily challenge: ' + todayKey;
 
-      // Try query with gameOver filter first, fall back to simpler query
       db.collection('fiftle_scores')
         .where('date', '==', todayKey)
         .where('gameOver', '==', true)
@@ -533,7 +524,6 @@
           renderLeaderboardResults(snapshot);
         }).catch(function(err) {
           debugLog('Leaderboard query 1 error: ' + err.message);
-          // Fallback without gameOver filter
           db.collection('fiftle_scores')
             .where('date', '==', todayKey)
             .orderBy('won', 'desc')
@@ -557,7 +547,6 @@
       var rank = 0;
       snapshot.forEach(function(doc) {
         var d = doc.data();
-        // Skip in-progress games in fallback query
         if (d.gameOver === false) return;
         rank++;
         var isYou = d.playerId === currentUid;
@@ -583,7 +572,7 @@
     }
 
     // =====================================================
-    // GHOST REPLAY
+    // GHOST REPLAY — always shows colours
     // =====================================================
     var replayData = null;
     var replayStep = 0;
@@ -624,8 +613,9 @@
       for (var i = 0; i < replayStep; i++) {
         var g = parseGuess(replayData.guesses[i]);
         var result = evaluate(dailySecret, g);
-        var isFree = (i === 0);
-        html += makeGuessRowHTML(g, result, isFree ? 0 : i, isFree);
+        var isStarter = (i === 0);
+        // Replays always show colours since the game is finished
+        html += makeGuessRowHTML(g, result, dailySecret, isStarter ? 0 : i, isStarter, true);
       }
       if (replayStep === 0) {
         html = '<div class="lb-empty">Press Next ➡ to step through guesses</div>';
@@ -686,7 +676,7 @@
 
     function buildShareText() {
       var allGuesses = [];
-      if (freeGuess) allGuesses.push(freeGuess);
+      if (starterGuess) allGuesses.push(starterGuess);
       guesses.forEach(function(g) { allGuesses.push(g); });
       var lines = allGuesses.map(function(g) {
         var colours = evaluatePerDigit(secret, g.guess);
@@ -738,12 +728,25 @@
       }
     }
 
-    function makeGuessRowHTML(guess, result, index, isFreebie) {
+    // showColours: whether to colour individual digits green/orange
+    function makeGuessRowHTML(guess, result, sec, index, isStarter, showColours) {
       var cls = "guess-row";
-      if (isFreebie) cls += " freebie";
+      if (isStarter) cls += " starter";
       if (result.exact === 5) cls += " winner";
-      var label = isFreebie ? "free" : "#" + index;
-      var digitsHTML = guess.map(function(d) { return '<span class="guess-digit">' + d + '</span>'; }).join("");
+      var label = isStarter ? "starter" : "#" + index;
+
+      var digitsHTML;
+      if (showColours) {
+        var perDigit = evaluatePerDigit(sec, guess);
+        digitsHTML = guess.map(function(d, i) {
+          return '<span class="guess-digit d-' + perDigit[i] + '">' + d + '</span>';
+        }).join("");
+      } else {
+        digitsHTML = guess.map(function(d) {
+          return '<span class="guess-digit">' + d + '</span>';
+        }).join("");
+      }
+
       return '<div class="' + cls + '">' +
         '<div class="guess-left">' +
           '<span class="guess-idx">' + label + '</span>' +
@@ -759,9 +762,11 @@
     function renderGuessList() {
       var list = document.getElementById("guess-list");
       var html = "";
-      if (freeGuess) html += makeGuessRowHTML(freeGuess.guess, freeGuess.result, 0, true);
+      // Only show per-digit colours when game is over
+      var showColours = gameOver;
+      if (starterGuess) html += makeGuessRowHTML(starterGuess.guess, starterGuess.result, secret, 0, true, showColours);
       guesses.forEach(function(g, i) {
-        html += makeGuessRowHTML(g.guess, g.result, i + 1, false);
+        html += makeGuessRowHTML(g.guess, g.result, secret, i + 1, false, showColours);
       });
       list.innerHTML = html;
       list.scrollTop = list.scrollHeight;
@@ -894,8 +899,8 @@
       won = false;
       submitting = false;
 
-      var fg = generateDailyFreeGuess(todayKey);
-      freeGuess = { guess: fg, result: evaluate(secret, fg) };
+      var sg = generateStarterGuess(todayKey, currentUid);
+      starterGuess = { guess: sg, result: evaluate(secret, sg) };
 
       debugLog('New game. Secret: ' + JSON.stringify(secret));
 
